@@ -1,0 +1,23 @@
+Console initialized.
+UDP Initialized
+Vril Engine SDL (Linux)
+128.0 megabyte Quake hunk 
+SDL OpenGL video mode 960x544 initialized.
+Can't register variable show_fps, already defined
+Can't register variable r_flametype, already defined
+Can't register variable r_runqmbparticles, already defined
+========Nazi Zombies Portable Initialized=========
+execing nzp.rc
+execing default.cfg
+"DEL" isn't a valid key
+Command "volume" not found, check QC...
+execing config.cfg
+execing autoexec.cfg
+execing menu_capture.cfg
+COM_WriteFile: /workspace/scratch/ddfea2c7325f/skirmish/verify-vita-data/nzp/quake00.tga
+Wrote quake00.tga
+COM_WriteFile: /workspace/scratch/ddfea2c7325f/skirmish/verify-vita-data/nzp/quake01.tga
+Wrote quake01.tga
+1 demo(s) in loop
+Playing demo from fakedemo.dem.
+ERROR: couldn't open demo for reading.

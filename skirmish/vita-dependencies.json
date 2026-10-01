@@ -1,0 +1,77 @@
+[
+  {
+    "name": "curl.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/curl.tar.xz",
+    "sha256": "736d57b43be30d0125eb7751afcd063fe278fae472efa0ee28c9e1ca54dea603"
+  },
+  {
+    "name": "libjpeg-turbo.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/libjpeg-turbo.tar.xz",
+    "sha256": "87511c384b36f944655e298140f24215f3da8b59821deddca0f6a9c5e3438b78"
+  },
+  {
+    "name": "libmathneon.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/libmathneon.tar.xz",
+    "sha256": "a27601332424dd1e1ba595102a1be9095176b592213d30fec37af3c3510248c0"
+  },
+  {
+    "name": "libogg.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/libogg.tar.xz",
+    "sha256": "59299c36b20a3d6628afd3b3a2d35a49216192400343dd04c16fb5b068b64388"
+  },
+  {
+    "name": "libpng.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/libpng.tar.xz",
+    "sha256": "e502fac413e17b75a06f8f2a88f87daec13d83a33e9206713a0612ee245b72b8"
+  },
+  {
+    "name": "libvorbis.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/libvorbis.tar.xz",
+    "sha256": "a6a7a609424d9b2a2bdcbefd56af68b2bc23d76a5e1f2d1c640868544280772a"
+  },
+  {
+    "name": "mpg123.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/mpg123.tar.xz",
+    "sha256": "09e26b25906bfe5d2b9aab390e3c21986c10b553bc101f356af9b272c1f9e5f6"
+  },
+  {
+    "name": "openssl.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/openssl.tar.xz",
+    "sha256": "d35a47aca776e568a630cfbf9d69e959e95c732cfcf964b73fefac8cb24175b1"
+  },
+  {
+    "name": "SceShaccCgExt.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/SceShaccCgExt.tar.xz",
+    "sha256": "ded53f55e59a39b32cc1167d8a00f46b239e9844eb8a65870d3dba2f30fa88ba"
+  },
+  {
+    "name": "speexdsp.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/speexdsp.tar.xz",
+    "sha256": "f9719e1c247df00808b752ad9d6c9e34dedf028003e4ca678872b915b5cba9b3"
+  },
+  {
+    "name": "taihen.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/taihen.tar.xz",
+    "sha256": "afced213d9d308a665ef91809fd728614a92ec31b2fcf61cf1f6a3e98bec4014"
+  },
+  {
+    "name": "vitaGL.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/vitaGL.tar.xz",
+    "sha256": "752bd2974afbcaf471600acd5ca27e480522e3d9bd4f5628c76254ff2a8d8caa"
+  },
+  {
+    "name": "vitaShaRK.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/vitaShaRK.tar.xz",
+    "sha256": "704af0538cf0bd8b55af33b69e807e903589244460a6797fb85c7ac8553dfd30"
+  },
+  {
+    "name": "zlib.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/zlib.tar.xz",
+    "sha256": "f39cea16c176f93dc744597113f093db0d48adf23dd25a14ee0d2ec47df17fa6"
+  },
+  {
+    "name": "zstd.tar.xz",
+    "url": "https://github.com/vitasdk/packages/releases/download/master/zstd.tar.xz",
+    "sha256": "b459390f8f6b6f5c7657d32d2681c82206b636133c4d277916e43270e0eec00b"
+  }
+]

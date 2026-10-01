@@ -1,0 +1,35 @@
+{
+  "quakec": {
+    "url": "https://github.com/nzp-team/quakec.git",
+    "revision": "8a77f1ce45f1a2b9aa0afb301446954fda40e696"
+  },
+  "vril-engine": {
+    "url": "https://github.com/nzp-team/vril-engine.git",
+    "revision": "aaa474061bff5d0e3aa471ac01f5f0e01b4fca31"
+  },
+  "assets": {
+    "url": "https://github.com/nzp-team/assets.git",
+    "revision": "70a14104914f2fc65b99b3c58b1f92c2356ecf76"
+  },
+  "vitaGL": {
+    "url": "https://github.com/Rinnegatamante/vitaGL.git",
+    "revision": "6e7fe40292e8f1d10f9a94ff2cd2f4fb1ba452a5",
+    "flags": [
+      "MATH_SPEEDHACK=1",
+      "PRIMITIVES_SPEEDHACK=1",
+      "HAVE_FFP_SHADER_SUPPORT=1",
+      "DISABLE_FFP_MULTITEXTURE=1",
+      "HAVE_WVP_ON_GPU=1",
+      "NO_TILE_CLIPPER=1",
+      "NO_SPLASHSCREEN=1"
+    ]
+  },
+  "VitaSDK": {
+    "url": "https://github.com/vitasdk/autobuilds/releases/download/sdk-snapshot-20260926.790.1/vitasdk-bootstrap-x86_64-linux-gnu.tar.bz2",
+    "sha256": "9c00272e100f42f6b6baaaee31aa75dd314b3e93f5e78f6172151cfa41fad707",
+    "compiler": "arm-vita-eabi-gcc 15.2.0"
+  },
+  "VHLT": {
+    "url": "https://github.com/nzp-team/vhlt/releases/download/Vanilla/vhlt-v34-linux-x86_64.zip"
+  }
+}
