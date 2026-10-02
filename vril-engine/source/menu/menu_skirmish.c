@@ -3,6 +3,7 @@
 #include "menu_defs.h"
 
 static cvar_t mp_enabled = {"sv_skirmish", "0"};
+static cvar_t mp_map = {"mp_map", "0", true};
 static cvar_t mp_bots = {"mp_bots", "6", true};
 static cvar_t mp_mode = {"mp_mode", "1", true};
 static cvar_t mp_respawn = {"mp_respawn", "5", true};
@@ -43,6 +44,7 @@ void Menu_Skirmish_Init(void)
 {
     unsigned i;
     Cvar_RegisterVariable(&mp_enabled);
+    Cvar_RegisterVariable(&mp_map);
     Cvar_RegisterVariable(&mp_bots);
     Cvar_RegisterVariable(&mp_mode);
     Cvar_RegisterVariable(&mp_respawn);
@@ -59,6 +61,7 @@ void Menu_Skirmish_Init(void)
         Cvar_RegisterVariable(&mp_hud[i]);
 }
 
+static void MP_MapNext(void) { Cvar_SetValue("mp_map", !mp_map.value); }
 static void MP_ToggleMode(void) { Cvar_SetValue("mp_mode", !mp_mode.value); }
 static void MP_ToggleLoadouts(void) { Cvar_SetValue("mp_loadouts", !mp_loadouts.value); }
 static void MP_Skill(void) { Cvar_SetValue("mp_skill", ((int)mp_skill.value + 1) % 3); }
@@ -126,9 +129,10 @@ static void MP_Start(void)
     Cvar_SetValue("sv_gamemode", 0);
     Cvar_Set("sv_gameconfig", "");
     Cvar_SetValue("waypoint_mode", 0);
-    Cbuf_AddText("disconnect\nmaxplayers 1\nlisten 0\ndeathmatch 0\ncoop 0\nmap mp_test\n");
-    map_loadname = "mp_test";
-    map_loadname_pretty = "Proving Ground";
+    map_loadname = mp_map.value ? "mp_depot" : "mp_test";
+    map_loadname_pretty = mp_map.value ? "Supply Depot" : "Proving Ground";
+    Cbuf_AddText("disconnect\nmaxplayers 1\nlisten 0\ndeathmatch 0\ncoop 0\n");
+    Cbuf_AddText(mp_map.value ? "map mp_depot\n" : "map mp_test\n");
     m_state = m_none;
     key_dest = key_game;
     LoadingScreen_Begin(map_loadname);
@@ -147,7 +151,7 @@ void Menu_Skirmish_Draw(void)
     static const char *skills[] = {"RECRUIT", "REGULAR", "VETERAN"};
     Menu_DrawCustomBackground(true);
     Menu_DrawTitle("OFFLINE MULTIPLAYER", MENU_COLOR_WHITE);
-    Menu_DrawButton(1, 0, "START MATCH", "Proving Ground: a compact test arena with cover and bot routes.", MP_Start);
+    Menu_DrawButton(1, 0, "START MATCH", "Start an offline match on the selected map.", MP_Start);
     Menu_DrawButton(2, 1, "CREATE A CLASS", "Edit and select your five saved loadouts.", Menu_Classes_Set);
     Menu_DrawButton(3, 2, "GAME MODE", "Team Deathmatch: Allies versus Axis, friendly fire off. Or Free-for-All.", MP_ToggleMode);
     Menu_DrawOptionButton(3, mp_mode.value ? "TEAM DEATHMATCH" : "FREE-FOR-ALL");
@@ -163,5 +167,7 @@ void Menu_Skirmish_Draw(void)
     Menu_DrawOptionSlider(8, 7, 5, 200, mp_scorelimit, "mp_scorelimit", false, true, 5);
     Menu_DrawButton(9, 8, "TIME LIMIT", "Match length in minutes. The result remains until you restart or leave.", NULL);
     Menu_DrawOptionSlider(9, 8, 1, 30, mp_minutes, "mp_minutes", false, true, 1);
-    Menu_DrawButton(-1, 9, "BACK", "Return to the main menu.", Menu_Main_Set);
+    Menu_DrawButton(10, 9, "MAP", "Proving Ground: open arena. Supply Depot: buildings and flanking lanes.", MP_MapNext);
+    Menu_DrawOptionButton(10, mp_map.value ? "SUPPLY DEPOT" : "PROVING GROUND");
+    Menu_DrawButton(-1, 10, "BACK", "Return to the main menu.", Menu_Main_Set);
 }

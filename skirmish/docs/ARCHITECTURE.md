@@ -39,16 +39,24 @@ Team presets choose among Rifleman (Garand), Assault (Thompson), Support (BAR), 
 | `mp_minutes` | 10 | Time limit, clamped to 1–30 minutes |
 | `mp_class` | 0 | Active class index, 0–4 |
 | `mp_class1_primary` … `mp_class5_primary` | role dependent | Explicitly validated base weapon ID |
-| `mp_class1_secondary` … `mp_class5_secondary` | 1,1,4,1,1 | Colt 1 or Magnum 4 |
+| `mp_class1_secondary` … `mp_class5_secondary` | 1,1,4,1,1 | Colt 1, Magnum 4 or Ballistic Knife 6 |
 
 The menu weapon IDs, `MP_AllowedPrimary` and `weapons.json` must agree when expanding the pool. Do not replace the explicit allowlist with a broad numeric range: upgraded and special IDs are interleaved.
 
 ## Adding maps
 
-Use BSP30, with `info_mp_spawn` entities (team 1 Allies, team 2 Axis, or 0 universal) and `info_mp_node` entities. Place spawn and node origins at standing-player origin height above the floor. Supply enough unoccupied spawn locations; a blocked spawn is retried after 0.5 seconds. Keep the node count at or below 48 and check all routes before distributing a map. Add map selection to the setup menu when a second arena is ready.
+Use BSP30, with `info_mp_spawn` entities (team 1 Allies, team 2 Axis, or 0 universal) and `info_mp_node` entities. Place spawn and node origins at standing-player origin height above the floor. Supply enough unoccupied spawn locations; a blocked spawn is retried after 0.5 seconds. Keep the node count at or below 48 and check all routes before distributing a map. The setup menu now selects mp_test or mp_depot via archived mp_map (0 or 1).
 
-The included map has 18 team spawns and 35 nodes; its textures are embedded into the BSP. No stock zombie map is claimed to support this navigation or spawn schema.
+Proving Ground has 18 team spawns and 35 nodes; Supply Depot has 18 spawns and 41 nodes; its textures are embedded into the BSP. No stock zombie map is claimed to support this navigation or spawn schema.
 
 ## Next work
 
 First collect hardware results for six and twelve bots, including memory and worst-case frame time during firefights and explosions. Then improve enemy silhouettes/faction uniforms, visible weapon animations, sidearm and grenade use, cover selection, reload feedback and class editing. Killstreaks and perks should build on verified death/score events after the core combat loop is balanced.
+
+## 0.3 model pipeline
+
+`tools/build_soldiers.py` reads native MDLs with `mdl_tools.py`, preserves skin/face detail while adapting uniform materials, adjusts Axis helmet proportions, and exports 40-pose bot variants. `generated/models/skirmish/` contains the ready-to-use assets. It bakes each of 19 existing bot weapon meshes to the right-hand vertex cluster, using rigid transforms calculated offline. External weapon skins are copied unchanged when present. Runtime code uses a static model-path allowlist and reuses one non-solid held-weapon entity per bot. The body and weapon share origins, angles and pose indices.
+
+Pose priorities: death, reload, recent fire, walk, idle. Death uses an eight-frame fall ending in a ground pose. Reload remains a shared animation, not a unique magazine manipulation for each firearm. Body hitboxes are explicitly reset after assigning visual models. The first-person player model/weapon handling remains upstream.
+
+`SKIRMISH_PREVIEW` enables deterministic posed screenshot fixtures only in a separate QA compilation; release/test scripts do not define it.

@@ -21,17 +21,38 @@ float(float weapon) MP_AllowedPrimary =
     return false;
 };
 
-float(float weapon) MP_AllowedSecondary =
-{
-    return weapon == W_COLT || weapon == W_357 || weapon == W_BK;
-};
-
-// Angular error grows beyond close range; moving targets are harder to track.
+float(float weapon) MP_AllowedSecondary = { return weapon == W_COLT || weapon == W_357 || weapon == W_BK; };
 float(float skill, float distance, float speed) MP_AimSpread =
 {
     float range = clamp((distance - 256) / 1024, 0, 1);
     return (0.09 - skill * 0.022) * (1 + range * 1.5)
         + clamp(speed / 240, 0, 1) * (0.025 - skill * 0.006);
+};
+
+string(float weapon) MP_HeldModel =
+{
+    switch (weapon) {
+        case 2: return "models/skirmish/w2.mdl";
+        case 3: return "models/skirmish/w3.mdl";
+        case 5: return "models/skirmish/w5.mdl";
+        case 7: return "models/skirmish/w7.mdl";
+        case 8: return "models/skirmish/w8.mdl";
+        case 9: return "models/skirmish/w9.mdl";
+        case 10: return "models/skirmish/w10.mdl";
+        case 11: return "models/skirmish/w11.mdl";
+        case 12: return "models/skirmish/w12.mdl";
+        case 13: return "models/skirmish/w13.mdl";
+        case 15: return "models/skirmish/w15.mdl";
+        case 16: return "models/skirmish/w16.mdl";
+        case 18: return "models/skirmish/w18.mdl";
+        case 19: return "models/skirmish/w19.mdl";
+        case 21: return "models/skirmish/w21.mdl";
+        case 22: return "models/skirmish/w22.mdl";
+        case 23: return "models/skirmish/w23.mdl";
+        case 24: return "models/skirmish/w24.mdl";
+        case 58: return "models/skirmish/w58.mdl";
+    }
+    return "models/skirmish/w12.mdl";
 };
 
 float(float role) MP_Preset =
@@ -195,7 +216,28 @@ void() MP_ResetActor =
     self.mp_stuck = 0;
     self.view_ofs = VIEW_OFS_HL;
     setsize(self, PLAYER_MINS_STANDING, PLAYER_MAXS_STANDING);
-    setmodel(self, "models/player.mdl");
+    if (self.mp_bot) setmodel(self, self.team == 1 ? "models/skirmish/allies.mdl" : "models/skirmish/axis.mdl");
+    else setmodel(self, "models/player.mdl");
+    setsize(self, PLAYER_MINS_STANDING, PLAYER_MAXS_STANDING);
+    self.mp_anim_until = self.mp_reload_start = self.mp_died_at = 0;
+};
+
+// One reused, non-solid visual entity per bot. Frames are baked to the body's
+// right-hand motion, so Vita needs no skeletal mesh or per-frame attachment math.
+void() MP_UpdateVisual =
+{
+    if (self.health <= 0) self.frame = 32 + clamp(floor((time - self.mp_died_at) * 10), 0, 7);
+    else if (self.mp_reload_at) self.frame = 11 + clamp(floor((time - self.mp_reload_start) /
+        MP_Max(0.1, self.mp_reload_at - self.mp_reload_start) * 14), 0, 13);
+    else if (self.mp_anim_until > time) self.frame = time > self.mp_anim_until - 0.1 ? 10 : 9;
+    else if (vlen(self.origin - self.mp_visual_origin) > 1) self.frame = 1 + floor(time * 10 + self.mp_index) % 8;
+    else self.frame = 0;
+    self.mp_visual_origin = self.origin;
+    if (self.mp_held != world) {
+        setorigin(self.mp_held, self.origin);
+        self.mp_held.angles = self.angles;
+        self.mp_held.frame = self.frame;
+    }
 };
 
 void() MP_PlayerSpawn =
@@ -239,7 +281,6 @@ void() MP_PlayerSpawn =
     float slot = floor(clamp(cvar("mp_class"), 0, 4));
     float primary = cvar(sprintf("mp_class%d_primary", slot + 1));
     float secondary = cvar(sprintf("mp_class%d_secondary", slot + 1));
-    // Migrate old knife-primary classes and sanitize retired weapons in saves.
     if (primary == W_BK) secondary = W_BK;
     if (!MP_AllowedPrimary(primary)) primary = MP_Preset(slot);
     if (!MP_AllowedSecondary(secondary)) secondary = W_COLT;
@@ -273,6 +314,16 @@ void() MP_BotSpawn =
     self.mp_clip = getWeaponMag(self.weapon);
     self.mp_fire_at = time + 1;
     self.mp_scan_at = time + self.mp_index * 0.02;
+    if (self.mp_held == world) {
+        self.mp_held = spawn();
+        self.mp_held.classname = "mp_held_weapon";
+        self.mp_held.owner = self;
+        self.mp_held.solid = SOLID_NOT;
+        self.mp_held.movetype = MOVETYPE_NONE;
+    }
+    setmodel(self.mp_held, MP_HeldModel(self.weapon));
+    self.mp_visual_origin = self.origin;
+    MP_UpdateVisual();
 };
 
 void(entity victim, entity attacker, float damage, float style) MP_Damage =
@@ -306,7 +357,8 @@ void(entity victim, entity attacker, float damage, float style) MP_Damage =
     victim.movetype = MOVETYPE_NONE;
     victim.velocity = '0 0 0';
     victim.weaponmodel = victim.weapon2model = "";
-    victim.frame = 38;
+    victim.mp_died_at = time;
+    victim.frame = victim.mp_bot ? 32 : 38;
     victim.mp_respawn_at = time + mp_respawn;
     if (!victim.mp_bot) {
         victim.think = SUB_Null;
@@ -366,6 +418,7 @@ void() MP_BotFire =
 {
     if (time < self.mp_fire_at || time < self.mp_react_at || self.mp_reload_at) return;
     if (self.mp_clip <= 0) {
+        self.mp_reload_start = time;
         self.mp_reload_at = time + MP_Max(1.5, getWeaponDelay(self.weapon, RELOAD));
         return;
     }
@@ -377,7 +430,7 @@ void() MP_BotFire =
         self.mp_burst = 0;
         self.mp_fire_at += 0.4 + random() * 0.45;
     }
-    self.frame = 9;
+    self.mp_anim_until = time + 0.2;
     self.effects = self.effects | EF_MUZZLEFLASH;
     Sound_PlaySound(self, GetWeaponSound(self.weapon), SOUND_TYPE_WEAPON_FIRE, SOUND_PRIORITY_ALLOWSKIP);
     vector start = self.origin + self.view_ofs;
@@ -434,7 +487,7 @@ void() MP_Navigate =
             self.mp_stuck = 0;
         }
     } else self.mp_stuck = 0;
-    self.frame = 1 + floor(time * 10 + self.mp_index) % 8;
+
 };
 
 void() MP_BotThink =
@@ -443,6 +496,7 @@ void() MP_BotThink =
     if (mp_finished) return;
     if (self.health <= 0) {
         if (self.mp_respawn_at <= time) MP_BotSpawn();
+        MP_UpdateVisual();
         return;
     }
     if (self.health_delay < time) self.health = MP_Min(100, self.health + 3);
@@ -457,7 +511,7 @@ void() MP_BotThink =
         float distance = vlen(self.enemy.origin - self.origin);
         float yaw = vectoyaw(self.enemy.origin - self.origin);
         self.angles_y = yaw;
-        if (self.mp_reload_at) { self.frame = 11; MP_Navigate(); return; }
+        if (self.mp_reload_at) { MP_Navigate(); MP_UpdateVisual(); return; }
         if (self.mp_strafe_at < time) {
             self.mp_strafe = random() < 0.5 ? -1 : 1;
             self.mp_strafe_at = time + 0.8 + random();
@@ -467,6 +521,7 @@ void() MP_BotThink =
         else if (!walkmove(yaw + self.mp_strafe * 90, 10)) self.mp_strafe *= -1;
         if (distance < 1600) MP_BotFire();
     } else MP_Navigate();
+    MP_UpdateVisual();
 };
 
 float() MP_PlayerThink =
@@ -560,6 +615,20 @@ void() MP_Frame =
             cvar_set("mp_hud_result", result);
         }
     }
+#ifdef SKIRMISH_PREVIEW
+    // Deterministic visual QA fixture, absent from release builds.
+    entity preview_self = self;
+    for (float pv = 1; pv <= mp_botcount; pv++) {
+        self = mp_actors[pv]; self.think = SUB_Null; self.nextthink = -1;
+        if (pv > 2) { setmodel(self, ""); setmodel(self.mp_held, ""); continue; }
+        setorigin(self, [pv == 1 ? -43 : 43, -20, 36]); self.angles = '0 240 0';
+        self.health = 10000; self.frame = cvar("mp_class") == 3 ? 15 : cvar("mp_class") == 4 ? 39 : cvar("mp_class") == 2 ? 9 : 0;
+        setorigin(self.mp_held, self.origin); self.mp_held.angles = self.angles; self.mp_held.frame = self.frame;
+    }
+    self = mp_actors[0]; self.health = 10000; setorigin(self, '0 -230 36');
+    self.v_angle = '8 90 0'; self.angles = self.v_angle; self.fixangle = true;
+    self = preview_self;
+#endif
     if (time >= mp_hudtime) {
         MP_PublishHUD();
         mp_hudtime = time + 0.2;
@@ -577,6 +646,13 @@ void() MP_Init =
     mp_limit = floor(clamp(cvar("mp_scorelimit"), 5, 200));
     mp_loadouts = cvar("mp_loadouts") != 0;
     game_modifier_can_packapunch = false;
+    precache_model("models/skirmish/allies.mdl");
+    precache_model("models/skirmish/axis.mdl");
+    float botweapons[19] = {W_KAR, W_THOMPSON, W_BAR, W_BROWNING, W_DB,
+        W_FG, W_GEWEHR, W_KAR_SCOPE, W_M1, W_M1A1, W_MP40, W_MG,
+        W_PPSH, W_PTRS, W_SAWNOFF, W_STG, W_TRENCH, W_TYPE, W_SPRING};
+    for (float bw = 0; bw < 19; bw++)
+        precache_model(MP_HeldModel(botweapons[bw]));
     for (float w = 1; w <= W_RAYMK2; w++) {
         if (MP_AllowedPrimary(w) || MP_AllowedSecondary(w)) {
             precache_model(GetWeaponModel(w, false));

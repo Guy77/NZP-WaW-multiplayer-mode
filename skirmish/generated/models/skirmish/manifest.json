@@ -1,0 +1,27 @@
+{
+  "frames": 40,
+  "weapons": {
+    "2": "kar/g_kar",
+    "3": "thomp/g_thomp",
+    "5": "bar/g_bar",
+    "7": "browning/g_browning",
+    "8": "db/g_db",
+    "9": "fg42/g_fg",
+    "10": "gewehr/g_gewehr",
+    "11": "kar/g_kars",
+    "12": "garand/g_m1",
+    "13": "m1carbine/g_m1a1",
+    "15": "mp40/g_mp40",
+    "16": "mg/g_mg",
+    "18": "ppsh/g_ppsh",
+    "19": "ptrs/g_ptrs",
+    "21": "sawnoff/g_sawnoff",
+    "22": "stg/g_stg",
+    "23": "trench/g_trench",
+    "24": "type/g_type",
+    "58": "spring/g_spring"
+  },
+  "body_vertices": 801,
+  "body_triangles": 940,
+  "attachment": "one non-solid entity per bot; same pose index and origin as body"
+}

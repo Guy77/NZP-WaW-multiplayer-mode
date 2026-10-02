@@ -7,7 +7,7 @@ execing nzp.rc
 CL_EstablishConnection: connected to local
 Client LOCAL connected
 
-VERSION 2.00 SERVER (40611 CRC)
+VERSION 2.00 SERVER (58926 CRC)
 
 
 
@@ -16,5 +16,5 @@ SKIRMISH TEST: starting real-engine regression checks
 SKIRMISH TEST: initial clients=0 actors=7
 player entered the game
 SKIRMISH TEST: rules, classes, collision, navigation, respawn passed
-SKIRMISH TEST: moved=6/6, bot kills=12
+SKIRMISH TEST: moved=6/6, bot kills=16
 SKIRMISH TESTS PASS

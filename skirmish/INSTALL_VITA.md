@@ -1,10 +1,12 @@
 # NZP Skirmish on PS Vita
 
-This is a homebrew prototype. The user confirmed version 0.1 works on physical Vita hardware. This 0.2 update is cross-compiled and desktop-regression-tested; its changes still need a device check.
+This is a homebrew prototype. The user confirmed 0.1 and 0.2 work well on physical Vita hardware. Version 0.3 introduces new models and a map; those changes need another device check.
 
-## Updating from 0.1
+## Updating an existing installation to 0.3
 
-Use the 0.2 Vita update ZIP with your existing 0.1 data. Close the game, install its replacement VPK through VitaShell, and merge its `data` folder into `ux0:/data`, replacing `progs.dat` and `version.txt`. If your active data is on `uma0:`, update that copy instead. The update contains no configuration file, so existing settings and classes are preserved. Both the VPK and game logic must be updated.
+Close the game. Install the replacement `NZP-Skirmish.vpk` through VitaShell, then merge the update's `data` folder into `ux0:/data`, allowing replacement of its files. If your active data is on `uma0:`, update that copy instead. Both the VPK and data are required. Existing 0.1/0.2 base assets must remain installed. The update contains no config.cfg, so saved settings and classes are preserved.
+
+The new data includes `nzp/progs.dat`, `nzp/maps/mp_depot.bsp` and `nzp/models/skirmish/`. Choose **Offline Multiplayer → Map → Supply Depot** to try the second map. In TDM, Allies wear khaki and Axis field-grey; in FFA all other soldiers are enemies.
 
 ## Full installation
 

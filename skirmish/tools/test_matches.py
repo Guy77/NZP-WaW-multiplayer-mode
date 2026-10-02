@@ -19,7 +19,7 @@ engine = args.engine.resolve()
 release = compile_qc()
 test = compile_qc(tests=True)
 try:
-    for bots, mode, loadouts, respawn in ((6, 1, 0, 5), (12, 0, 1, 7)):
+    for mapname, bots, mode, loadouts, respawn in (("mp_test", 6, 1, 0, 5), ("mp_test", 12, 0, 1, 7), ("mp_depot", 6, 1, 0, 5), ("mp_depot", 12, 0, 1, 7)):
         with tempfile.TemporaryDirectory(prefix="match-test-", dir=MOD) as tmp:
             game = Path(tmp) / "nzp"
             game.mkdir()
@@ -38,10 +38,10 @@ try:
                        "+cl_maxfps", "500", "+host_framerate", "0.05", "+sv_skirmish", "1",
                        "+mp_class", "0", "+mp_class1_primary", "12", "+mp_bots", str(bots),
                        "+mp_mode", str(mode), "+mp_loadouts", str(loadouts), "+mp_respawn", str(respawn),
-                       "+map", "mp_test"]
+                       "+map", mapname]
             result = subprocess.run(command, cwd=tmp, stdout=subprocess.PIPE,
                                     stderr=subprocess.STDOUT, text=True, timeout=60)
-            log = MOD / "docs" / f"tests-{bots}.log"
+            log = MOD / "docs" / f"tests-{mapname}-{bots}.log"
             log.write_text(result.stdout)
             if result.returncode or "SKIRMISH TESTS PASS" not in result.stdout:
                 print(result.stdout)

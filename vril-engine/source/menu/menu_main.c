@@ -74,15 +74,14 @@ void Menu_Main_Draw (void)
 		Menu_DrawDivider(3);
 
 		Menu_DrawButton(3, 2, "CONFIGURATION", "Tweak Game Related Options", Menu_Configuration_Set);
-		Menu_DrawButton(4, 3, "CHARACTER BIOS", "View Character Bios", Menu_Bios_Set);
+
+		Menu_DrawDivider(4);
+
+		Menu_DrawButton(4, 3, "CREDITS", "NZ:P Team + Special Thanks", Menu_Credits_Set);
 
 		Menu_DrawDivider(5);
 
-		Menu_DrawButton(5, 4, "CREDITS", "NZ:P Team + Special Thanks", Menu_Credits_Set);
-
-		Menu_DrawDivider(6);
-
-		Menu_DrawButton(6, 5, "QUIT GAME", "Return to Home Screen", Menu_EnterSubMenu);
+		Menu_DrawButton(5, 4, "QUIT GAME", "Return to Home Screen", Menu_EnterSubMenu);
 
 		Menu_DrawSocialBadge (1, MENU_SOC_YOUTUBE);
 		Menu_DrawSocialBadge (2, MENU_SOC_BLUESKY);
@@ -93,11 +92,10 @@ void Menu_Main_Draw (void)
 		Menu_DrawGreyButton(2, "CREATE A CLASS");
 		Menu_DrawDivider(3);
 		Menu_DrawGreyButton(3, "CONFIGURATION");
-		Menu_DrawGreyButton(4, "CHARACTER BIOS");
+		Menu_DrawDivider(4);
+		Menu_DrawGreyButton(4, "CREDITS");
 		Menu_DrawDivider(5);
-		Menu_DrawGreyButton(5, "CREDITS");
-		Menu_DrawDivider(6);
-		Menu_DrawGreyButton(6, "QUIT GAME");
+		Menu_DrawGreyButton(5, "QUIT GAME");
 
 		Menu_DrawSocialBadge (1, MENU_SOC_YOUTUBE);
 		Menu_DrawSocialBadge (2, MENU_SOC_BLUESKY);

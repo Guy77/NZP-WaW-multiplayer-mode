@@ -74,10 +74,11 @@ def stage(target, destination, asset_dir):
     # This sister game ships the original proving ground, not zombie maps.
     shutil.rmtree(game / "maps")
     (game / "maps").mkdir()
-    for name in ("mp_test.bsp", "mp_test.txt"):
+    for name in ("mp_test.bsp", "mp_test.txt", "mp_depot.bsp", "mp_depot.txt"):
         shutil.copy2(MOD / "maps" / name, game / "maps" / name)
     shutil.copy2(DIST / "progs.dat", game / "progs.dat")
-    (game / "version.txt").write_text("NZP Skirmish prototype 0.2\n")
+    shutil.copytree(MOD / "generated/models/skirmish", game / "models/skirmish", dirs_exist_ok=True)
+    (game / "version.txt").write_text("NZP Skirmish prototype 0.3\n")
     # Defaults are written once, so future launches preserve archived classes.
     with (game / "config.cfg").open("a") as config:
         config.write('\n// NZP Skirmish initial settings\n'

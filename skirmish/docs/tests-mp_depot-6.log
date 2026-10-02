@@ -1,0 +1,20 @@
+Console initialized.
+UDP Initialized
+Vril Engine SDL (Linux)
+128.0 megabyte Quake hunk 
+========Nazi Zombies Portable Initialized=========
+execing nzp.rc
+CL_EstablishConnection: connected to local
+Client LOCAL connected
+
+VERSION 2.00 SERVER (38879 CRC)
+
+
+
+Supply Depot - NZP Skirmish
+SKIRMISH TEST: starting real-engine regression checks
+SKIRMISH TEST: initial clients=0 actors=7
+player entered the game
+SKIRMISH TEST: rules, classes, collision, navigation, respawn passed
+SKIRMISH TEST: moved=6/6, bot kills=8
+SKIRMISH TESTS PASS

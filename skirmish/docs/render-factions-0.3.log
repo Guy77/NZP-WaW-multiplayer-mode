@@ -1,0 +1,28 @@
+Console initialized.
+UDP Initialized
+Vril Engine SDL (Linux)
+128.0 megabyte Quake hunk 
+SDL OpenGL video mode 960x544 initialized.
+Can't register variable show_fps, already defined
+Can't register variable r_flametype, already defined
+Can't register variable r_runqmbparticles, already defined
+========Nazi Zombies Portable Initialized=========
+execing nzp.rc
+execing default.cfg
+"DEL" isn't a valid key
+Command "volume" not found, check QC...
+execing config.cfg
+couldn't exec autoexec.cfg
+Command "mp_preview_pose" not found, check QC...
+CL_EstablishConnection: connected to local
+1 demo(s) in loop
+Client LOCAL connected
+Starting test suite: map-boot
+
+VERSION 2.00 SERVER (55967 CRC)
+
+
+
+Proving Ground - NZP Skirmish
+player entered the game
+Test suite passed: map-boot

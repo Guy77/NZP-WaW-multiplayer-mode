@@ -27,3 +27,7 @@ float(float weapon) MP_ShotDamage;
 #ifdef SKIRMISH_TEST
 void() MP_TestFrame;
 #endif
+
+.entity mp_held;
+.float mp_anim_until, mp_reload_start, mp_died_at;
+.vector mp_visual_origin;

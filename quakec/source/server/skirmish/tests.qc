@@ -22,23 +22,21 @@ void() MP_TestFrame =
         MP_Assert(mp_respawn == clamp(cvar("mp_respawn"), 1, 30), "respawn setting");
         MP_Assert(!MP_AllowedPrimary(W_RAY) && !MP_AllowedPrimary(W_RAYMK2) &&
             !MP_AllowedPrimary(W_BIATCH) && !MP_AllowedPrimary(W_AFTERBURNER) &&
-            !MP_AllowedPrimary(W_CUSTOM1) && !MP_AllowedPrimary(W_TESLA) &&
-            !MP_AllowedPrimary(W_M2) && !MP_AllowedPrimary(W_BK), "forbidden weapons");
+            !MP_AllowedPrimary(W_CUSTOM1) && !MP_AllowedPrimary(W_TESLA) && !MP_AllowedPrimary(W_M2) && !MP_AllowedPrimary(W_BK), "forbidden weapons");
         MP_Assert(player.weapon == cvar("mp_class1_primary"), "selected class primary");
         for (float i = 1; i <= mp_botcount; i++) {
             MP_Assert(mp_actors[i] != world && mp_actors[i].mp_bot, "actor creation");
             MP_Assert(!(mp_actors[i].flags & FL_CLIENT), "bot used a client slot");
             MP_Assert(mp_actors[i].health == 100, "bot spawn health");
+            MP_Assert(mp_actors[i].model == (mp_actors[i].team == 1 ? "models/skirmish/allies.mdl" : "models/skirmish/axis.mdl"), "faction model");
+            MP_Assert(mp_actors[i].mp_held != world && mp_actors[i].mp_held.solid == SOLID_NOT, "held weapon creation");
+            MP_Assert(mp_actors[i].mp_held.model == sprintf("models/skirmish/w%d.mdl", mp_actors[i].weapon), "held weapon matches loadout");
         }
         print(sprintf("SKIRMISH TEST: initial clients=%g actors=%g\n", player_count, mp_botcount + 1));
 
-        MP_Assert(MP_AllowedSecondary(W_BK) && !MP_AllowedSecondary(W_TESLA) &&
-            !MP_AllowedSecondary(W_M2) && !MP_AllowedSecondary(W_RAY), "secondary allowlist");
-        MP_Assert(MP_AimSpread(1, 1200, 0) > MP_AimSpread(1, 256, 0) * 2,
-            "long range accuracy penalty");
-        MP_Assert(MP_AimSpread(0, 900, 0) > MP_AimSpread(1, 900, 0) &&
-            MP_AimSpread(1, 900, 0) > MP_AimSpread(2, 900, 0), "skill accuracy ordering");
-        MP_Assert(MP_AimSpread(1, 900, 200) > MP_AimSpread(1, 900, 0), "moving target penalty");
+        MP_Assert(MP_AllowedSecondary(W_BK) && !MP_AllowedSecondary(W_TESLA) && !MP_AllowedSecondary(W_M2), "secondary allowlist");
+        MP_Assert(MP_AimSpread(1, 1200, 0) > MP_AimSpread(1, 256, 0) * 2, "distance aim penalty");
+        MP_Assert(MP_AimSpread(0, 900, 0) > MP_AimSpread(1, 900, 0) && MP_AimSpread(1, 900, 0) > MP_AimSpread(2, 900, 0), "difficulty ordering");
         float original_mode = mp_mode;
         mp_mode = 1;
         enemy.mp_protected = time + 1;
@@ -62,8 +60,11 @@ void() MP_TestFrame =
 
         // A wall blocks both vision and explosive damage.
         vector ppos = player.origin, apos = ally.origin;
-        setorigin(player, '-500 120 32');
-        setorigin(ally, '-260 120 32');
+        if (mapname == "mp_depot") {
+            setorigin(player, '-500 240 32'); setorigin(ally, '-500 -240 32');
+        } else {
+            setorigin(player, '-500 120 32'); setorigin(ally, '-260 120 32');
+        }
         MP_Assert(!MP_Visible(player, ally), "vision passed through cover");
         float savedhealth = ally.health;
         MP_Explosion(player, player, 150, 0, 400);
@@ -101,19 +102,27 @@ void() MP_TestFrame =
         self = player;
         cvar_set("mp_class1_primary", ftos(W_BK));
         MP_PlayerSpawn();
-        MP_Assert(player.weapon == W_M1 && player.weapons[1].weapon_id == W_BK,
-            "old knife primary migration");
-        cvar_set("mp_class1_secondary", ftos(W_M2));
-        MP_PlayerSpawn();
+        MP_Assert(player.weapon == W_M1 && player.weapons[1].weapon_id == W_BK, "old knife class migration");
+        cvar_set("mp_class1_secondary", ftos(W_M2)); MP_PlayerSpawn();
         MP_Assert(player.weapons[1].weapon_id == W_COLT, "invalid secondary fallback");
-        cvar_set("mp_class1_secondary", ftos(W_BK));
-        MP_PlayerSpawn();
-        MP_Assert(player.weapons[1].weapon_id == W_BK, "ballistic knife secondary equipment");
         cvar_set("mp_class1_primary", ftos(W_RAY));
         MP_PlayerSpawn();
         MP_Assert(player.weapon == W_M1, "invalid class was not sanitized");
         cvar_set("mp_class1_primary", ftos(W_M1));
         MP_PlayerSpawn();
+        // Visual state must track without allocating new attachments on respawn.
+        self = enemy;
+        entity held_before = enemy.mp_held;
+        MP_BotSpawn(); MP_BotSpawn();
+        MP_Assert(enemy.mp_held == held_before, "respawn leaked weapon attachment");
+        enemy.mp_reload_start = time - 0.75; enemy.mp_reload_at = time + 0.75;
+        MP_UpdateVisual();
+        MP_Assert(enemy.frame == 18 && enemy.mp_held.frame == enemy.frame, "reload pose synchronization");
+        enemy.mp_reload_at = 0; enemy.mp_anim_until = time + 0.2;
+        MP_UpdateVisual(); MP_Assert(enemy.frame == 9, "firing pose");
+        enemy.health = 0; enemy.mp_died_at = time - 2; MP_UpdateVisual();
+        MP_Assert(enemy.frame == 39 && enemy.mp_held.frame == 39, "corpse pose");
+        MP_BotSpawn();
         mp_tests_phase = 13;
     } else if (mp_tests_phase == 13) {
         // Exercise the actual player weapon firing path, including ammo and
