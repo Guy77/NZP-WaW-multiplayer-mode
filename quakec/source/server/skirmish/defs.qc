@@ -31,3 +31,22 @@ void() MP_TestFrame;
 .entity mp_held;
 .float mp_anim_until, mp_reload_start, mp_died_at;
 .vector mp_visual_origin;
+
+// One selection, separate from the zombie perk bitmask.
+#define MP_PERK_NONE 0
+#define MP_PERK_DOUBLE 1
+#define MP_PERK_SLEIGHT 2
+#define MP_PERK_JUGGERNAUT 3
+#define MP_PERK_PARTING 4
+#define MP_PERK_STEADY 5
+#define MP_PERK_FLAK 6
+#define MP_PERK_OVERKILL 7
+#define MP_PERK_MARATHON 8
+.float mp_perk, mp_score_scale, mp_laststand, mp_bleedout_at;
+.float mp_other_clip, mp_switch_at, mp_ai_at;
+.entity mp_down_attacker;
+.string mp_shot_sound;
+float(entity actor, float delay) MP_FireDelay;
+float(entity actor, float delay) MP_ReloadDelay;
+float(entity actor) MP_SpreadScale;
+float(entity actor, float duration) MP_SprintLimit;

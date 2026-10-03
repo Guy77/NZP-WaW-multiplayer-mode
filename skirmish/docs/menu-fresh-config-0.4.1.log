@@ -1,0 +1,23 @@
+==5==WARNING: reading executable name failed with errno 2, some stack frames may not be symbolized
+==5==WARNING: reading executable name failed with errno 2, some stack frames may not be symbolized
+Console initialized.
+Vril Engine SDL (Linux)
+64.0 megabyte Quake hunk 
+SDL OpenGL video mode 960x544 initialized.
+Can't register variable show_fps, already defined
+Can't register variable r_flametype, already defined
+Can't register variable r_runqmbparticles, already defined
+========Nazi Zombies Portable Initialized=========
+execing nzp.rc
+execing default.cfg
+"DEL" isn't a valid key
+Command "volume" not found, check QC...
+couldn't exec config.cfg
+execing autoexec.cfg
+1 demo(s) in loop
+Playing demo from fakedemo.dem.
+ERROR: couldn't open demo for reading.
+Ignoring invalid menu button index -1
+Ignoring invalid menu button index 16
+Ignoring invalid menu button index 16
+SKIRMISH MENU TESTS PASS: 20 entry/back/navigation cycles

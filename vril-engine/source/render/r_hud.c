@@ -2641,6 +2641,10 @@ static void HUD_Skirmish(void)
     snprintf(text, sizeof(text), "KILLS %d   DEATHS %d",
         (int)Cvar_VariableValue("mp_hud_kills"), (int)Cvar_VariableValue("mp_hud_deaths"));
     HUD_DrawTextBackdrop(12*scale, 23*scale, text, 255, 255, 255, 255, scale);
+    if (!showscoreboard && !ended) {
+        snprintf(text, sizeof(text), "PERK: %s", Cvar_VariableString("mp_hud_perk"));
+        HUD_DrawTextBackdrop(12*scale, 36*scale, text, 220, 210, 165, 255, scale);
+    }
     if (showscoreboard || ended) {
         char board[1024], *line, *next;
         int row = 0;
@@ -2669,10 +2673,14 @@ static void HUD_Skirmish(void)
         HUD_Ammo();
         HUD_Grenades();
         HUD_Weapon();
-        if (Cvar_VariableValue("mp_hud_protected"))
-            HUD_DrawTextBackdrop(12*scale, 36*scale, "SPAWN PROTECTION", 145, 210, 245, 255, scale);
+        if (Cvar_VariableValue("mp_hud_downed")) {
+            snprintf(text, sizeof(text), "PARTING SHOT: %d  |  NO RESERVE AMMO", (int)Cvar_VariableValue("mp_hud_downed"));
+            HUD_DrawTextBackdrop(20*scale, vid.height-55*scale, text, 255, 210, 160, 255, scale);
+        }
+        if (Cvar_VariableValue("mp_hud_protected") && !Cvar_VariableValue("mp_hud_downed"))
+            HUD_DrawTextBackdrop(12*scale, 49*scale, "SPAWN PROTECTION", 145, 210, 245, 255, scale);
         if (Cvar_VariableString("mp_hud_target")[0])
-            HUD_DrawTextBackdrop(12*scale, 49*scale, Cvar_VariableString("mp_hud_target"), 180, 220, 200, 255, scale);
+            HUD_DrawTextBackdrop(12*scale, 62*scale, Cvar_VariableString("mp_hud_target"), 180, 220, 200, 255, scale);
     }
     if (screenflash_duration > sv.time) HUD_Screenflash();
 }

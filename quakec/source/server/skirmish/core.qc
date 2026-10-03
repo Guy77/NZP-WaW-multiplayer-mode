@@ -21,7 +21,7 @@ float(float weapon) MP_AllowedPrimary =
     return false;
 };
 
-float(float weapon) MP_AllowedSecondary = { return weapon == W_COLT || weapon == W_357 || weapon == W_BK; };
+float(float weapon) MP_AllowedSecondary = { return weapon == W_COLT || weapon == W_357 || weapon == W_BK || weapon == W_BIATCH; };
 float(float skill, float distance, float speed) MP_AimSpread =
 {
     float range = clamp((distance - 256) / 1024, 0, 1);
@@ -29,9 +29,70 @@ float(float skill, float distance, float speed) MP_AimSpread =
         + clamp(speed / 240, 0, 1) * (0.025 - skill * 0.006);
 };
 
+float(float perk) MP_ValidPerk = { if (perk != floor(perk) || perk < 0 || perk > 8) return 0; return perk; };
+float(entity actor, float delay) MP_FireDelay = { return actor.mp_perk == MP_PERK_DOUBLE ? delay / 1.33 : delay; };
+float(entity actor, float delay) MP_ReloadDelay = { return actor.mp_perk == MP_PERK_SLEIGHT ? delay * 0.5 : delay; };
+float(entity actor) MP_SpreadScale = { return actor.mp_perk == MP_PERK_STEADY ? 0.65 : 1; };
+float(entity actor, float duration) MP_SprintLimit = { return actor.mp_perk == MP_PERK_MARATHON ? duration * 2 : duration; };
+float(entity actor) MP_MoveScale = { return actor.mp_perk == MP_PERK_MARATHON ? 1.1 : 1; };
+// Reserved policy: no currency or perk scoring penalties enabled yet.
+float(float perk) MP_ScoreScale = { return 1; };
+void(entity actor, float perk) MP_SetPerk =
+{
+    actor.mp_perk = MP_ValidPerk(perk);
+    actor.mp_score_scale = MP_ScoreScale(actor.mp_perk);
+    actor.max_health = actor.mp_perk == MP_PERK_JUGGERNAUT ? 150 : 100;
+    actor.health = actor.max_health;
+    actor.perks = 0;
+};
+float(float perk, float weapon) MP_SecondaryAllowed =
+{
+    return perk == MP_PERK_OVERKILL ? MP_AllowedPrimary(weapon) : MP_AllowedSecondary(weapon);
+};
+string(float perk) MP_PerkName =
+{
+    switch (perk) {
+        case 1: return "Double Tap";
+        case 2: return "Sleight of Hand";
+        case 3: return "Juggernaut";
+        case 4: return "Parting Shot";
+        case 5: return "Steady Aim";
+        case 6: return "Flak Jacket";
+        case 7: return "Overkill";
+        case 8: return "Marathon";
+    }
+    return "No perk";
+};
+float(float weapon) MP_RangeGroup =
+{
+    switch (weapon) {
+        case W_KAR: case W_KAR_SCOPE: case W_SPRING: case W_PTRS: return 2;
+        case W_DB: case W_SAWNOFF: case W_TRENCH:
+        case W_COLT: case W_357: case W_BIATCH: case W_BK:
+        case W_THOMPSON: case W_MP40: case W_PPSH: case W_TYPE: case W_MP5K: return 0;
+    }
+    return 1;
+};
+float(float weapon, float skill, float distance, float speed) MP_WeaponSpread =
+{
+    float group = MP_RangeGroup(weapon), spread;
+    // Sniper target-plane error shrinks from 55 to 26 units with range.
+    // This reduces close-range hit probability, not only angular precision.
+    if (group == 2) spread = (55 - 29 * clamp((distance - 128) / 896, 0, 1)) / MP_Max(64, distance);
+    else if (group == 0) spread = 0.035 + 0.14 * clamp((distance - 192) / 640, 0, 1)
+        + 0.08 * clamp((distance - 832) / 768, 0, 1);
+    else spread = 0.05 + 0.035 * clamp((distance - 256) / 512, 0, 1)
+        + 0.13 * clamp((distance - 768) / 832, 0, 1);
+    return spread * (1.35 - clamp(skill, 0, 2) * 0.35)
+        + clamp(speed / 240, 0, 1) * (0.025 - clamp(skill, 0, 2) * 0.006);
+};
+
 string(float weapon) MP_HeldModel =
 {
     switch (weapon) {
+        case 1: return "models/skirmish/w1.mdl";
+        case 4: return "models/skirmish/w4.mdl";
+        case 28: return "models/skirmish/w28.mdl";
         case 2: return "models/skirmish/w2.mdl";
         case 3: return "models/skirmish/w3.mdl";
         case 5: return "models/skirmish/w5.mdl";
@@ -78,7 +139,7 @@ float(float weapon) MP_ShotDamage =
         case W_BROWNING: case W_MG: return 30;
         case W_DB: case W_SAWNOFF: case W_TRENCH: return 12; // per pellet
         case W_357: return 45;
-        case W_COLT: return 28;
+        case W_COLT: case W_BIATCH: return 28;
         default: return 25;
     }
 };
@@ -205,6 +266,9 @@ void() MP_ResetActor =
     self.takedamage = DAMAGE_AIM;
     self.solid = SOLID_SLIDEBOX;
     self.downed = false;
+    self.mp_laststand = self.mp_bleedout_at = 0;
+    self.mp_down_attacker = world;
+    self.mp_burst = self.mp_ai_at = 0;
     self.is_spectator = false;
     self.mp_respawn_at = 0;
     self.mp_protected = time + 1.5;
@@ -227,6 +291,7 @@ void() MP_ResetActor =
 void() MP_UpdateVisual =
 {
     if (self.health <= 0) self.frame = 32 + clamp(floor((time - self.mp_died_at) * 10), 0, 7);
+    else if (self.mp_laststand) self.frame = 40;
     else if (self.mp_reload_at) self.frame = 11 + clamp(floor((time - self.mp_reload_start) /
         MP_Max(0.1, self.mp_reload_at - self.mp_reload_start) * 14), 0, 13);
     else if (self.mp_anim_until > time) self.frame = time > self.mp_anim_until - 0.1 ? 10 : 9;
@@ -283,7 +348,11 @@ void() MP_PlayerSpawn =
     float secondary = cvar(sprintf("mp_class%d_secondary", slot + 1));
     if (primary == W_BK) secondary = W_BK;
     if (!MP_AllowedPrimary(primary)) primary = MP_Preset(slot);
-    if (!MP_AllowedSecondary(secondary)) secondary = W_COLT;
+    MP_SetPerk(self, cvar(sprintf("mp_class%d_perk", slot + 1)));
+    if (!MP_SecondaryAllowed(self.mp_perk, secondary))
+        secondary = self.mp_perk == MP_PERK_OVERKILL ? MP_Preset((slot + 1) % 5) : W_COLT;
+    self.mp_primary = primary; self.mp_secondary = secondary;
+    cvar_set(sprintf("mp_class%d_perk", slot + 1), ftos(self.mp_perk));
     cvar_set(sprintf("mp_class%d_primary", slot + 1), ftos(primary));
     cvar_set(sprintf("mp_class%d_secondary", slot + 1), ftos(secondary));
     Weapon_AssignWeapon(0, secondary, 0, 0, 0);
@@ -309,7 +378,15 @@ void() MP_BotSpawn =
             W_PPSH, W_PTRS, W_SAWNOFF, W_STG, W_TRENCH, W_TYPE, W_SPRING, W_GEWEHR};
         self.mp_primary = weapons[floor(random() * 20)];
     }
-    self.mp_secondary = (random() < 0.25) ? W_357 : W_COLT;
+    float selection = cvar("mp_botperk");
+    MP_SetPerk(self, selection == -1 ? floor(random() * 9) : selection);
+    self.mp_secondary = random() < 0.25 ? W_BIATCH : random() < 0.33 ? W_357 : W_COLT;
+    if (self.mp_perk == MP_PERK_OVERKILL) {
+        self.mp_secondary = MP_Preset(floor(random() * 5));
+        if (self.mp_secondary == self.mp_primary) self.mp_secondary = self.mp_primary == W_TRENCH ? W_KAR_SCOPE : W_TRENCH;
+    }
+    self.mp_other_clip = getWeaponMag(self.mp_secondary);
+    self.mp_switch_at = time + 1;
     self.weapon = self.mp_primary;
     self.mp_clip = getWeaponMag(self.weapon);
     self.mp_fire_at = time + 1;
@@ -326,29 +403,10 @@ void() MP_BotSpawn =
     MP_UpdateVisual();
 };
 
-void(entity victim, entity attacker, float damage, float style) MP_Damage =
+void(entity victim, entity attacker) MP_FinalDeath =
 {
-    if (!victim.mp_actor || victim.health <= 0 || mp_finished || damage <= 0) return;
-    if (victim.flags & FL_GODMODE || victim.mp_protected > time) return;
-    if (attacker != victim && attacker.mp_actor && mp_mode && victim.team == attacker.team) return;
-    victim.health -= damage;
-    victim.health_delay = time + 4;
-    victim.health_was_very_low = true;
-    if (!victim.mp_bot) {
-        victim.punchangle_x = -3;
-        victim.dmg_inflictor = attacker;
-    }
-    if (attacker.mp_actor && attacker != victim) {
-        victim.mp_lastseen = attacker.origin;
-        victim.mp_memory_until = time + 2;
-        // Incoming fire is audible information; aiming still requires sight.
-        if (victim.mp_bot && victim.enemy == world) {
-            victim.enemy = attacker;
-            victim.mp_react_at = time + 0.35;
-        }
-        if (!attacker.mp_bot) nzp_hitmarker(attacker, victim.health <= 0);
-    }
-    if (victim.health > 0) return;
+    if (victim.deadflag == DEAD_DEAD) return;
+    victim.mp_laststand = 0;
     victim.health = 0;
     victim.mp_deaths++;
     victim.deadflag = DEAD_DEAD;
@@ -372,6 +430,78 @@ void(entity victim, entity attacker, float damage, float style) MP_Damage =
     } else {
         victim.frags = MP_Max(0, victim.frags - 1);
     }
+};
+
+void(entity victim, entity attacker) MP_BeginLastStand =
+{
+    entity savedself = self;
+    self = victim;
+    self.mp_laststand = true;
+    self.mp_bleedout_at = time + 5;
+    self.mp_protected = time + 0.5;
+    self.mp_down_attacker = attacker;
+    self.health = 1;
+    self.mp_reload_at = self.mp_anim_until = 0;
+    self.velocity = '0 0 0'; self.movetype = MOVETYPE_NONE; self.maxspeed = 0;
+    self.view_ofs = '0 0 8'; self.new_ofs_z = 8;
+    setsize(self, PLAYER_MINS_STANDING, '16 16 16');
+    float sidearm = self.mp_secondary;
+    if (!MP_AllowedSecondary(sidearm) || sidearm == W_BK) sidearm = W_COLT;
+    if (self.mp_bot) {
+        self.weapon = sidearm;
+        self.mp_clip = getWeaponMag(sidearm) * (IsDualWeapon(sidearm) ? 2 : 1);
+        self.mp_fire_at = time + 0.5;
+        setmodel(self.mp_held, MP_HeldModel(sidearm));
+        MP_UpdateVisual();
+    } else {
+        self.zoom = self.sprinting = self.semi_actions = self.NeedLoad = 0;
+        self.dive = self.ads_release = self.has_ads_toggle = self.scopetime = 0;
+        self.stance = PLAYER_STANCE_CROUCH;
+        self.new_anim_stop = self.new_anim2_stop = 0;
+        self.weapon_burst_count = self.pri_grenade_state = 0;
+        self.primary_grenades = 0; self.secondary_grenades = -1;
+        self.isBuying = false;
+        for (float i = 0; i < MAX_PLAYER_WEAPONS; i++) self.weapons[i].weapon_id = 0;
+        self.weapon2model = "";
+        Weapon_AssignWeapon(0, sidearm, 0, 0, 0);
+        self.weapons[0].weapon_reserve = 0;
+        self.fire_delay = self.fire_delay2 = self.reload_delay = self.reload_delay2 = time + 0.5;
+        ReturnWeaponModel();
+        self.new_anim_stop = self.new_anim2_stop = 0;
+        self.knife_delay = self.switch_delay = time + 6;
+        self.think = SUB_Null; self.nextthink = -1;
+        self.frame = 38;
+    }
+    self = savedself;
+};
+
+void(entity victim, entity attacker, float damage, float style) MP_Damage =
+{
+    if (!victim.mp_actor || victim.health <= 0 || mp_finished || damage <= 0) return;
+    if (victim.flags & FL_GODMODE || victim.mp_protected > time) return;
+    if (attacker != victim && attacker.mp_actor && mp_mode && victim.team == attacker.team) return;
+    if (victim.mp_laststand) { MP_FinalDeath(victim, attacker); return; }
+    if (victim.mp_perk == MP_PERK_FLAK && (style == DMG_TYPE_GRENADE || style == DMG_TYPE_EXPLOSIVE)) damage *= 0.5;
+    victim.health -= damage;
+    victim.health_delay = time + 4;
+    victim.health_was_very_low = true;
+    if (!victim.mp_bot) {
+        victim.punchangle_x = -3;
+        victim.dmg_inflictor = attacker;
+    }
+    if (attacker.mp_actor && attacker != victim) {
+        victim.mp_lastseen = attacker.origin;
+        victim.mp_memory_until = time + 2;
+        // Incoming fire is audible information; aiming still requires sight.
+        if (victim.mp_bot && victim.enemy == world) {
+            victim.enemy = attacker;
+            victim.mp_react_at = time + 0.35;
+        }
+        if (!attacker.mp_bot) nzp_hitmarker(attacker, victim.health <= 0 && victim.mp_perk != MP_PERK_PARTING);
+    }
+    if (victim.health > 0) return;
+    if (victim.mp_perk == MP_PERK_PARTING && !victim.mp_laststand) MP_BeginLastStand(victim, attacker);
+    else MP_FinalDeath(victim, attacker);
 };
 
 void(entity inflictor, entity attacker, float damage, float minimum, float radius) MP_Explosion =
@@ -418,31 +548,35 @@ void() MP_BotFire =
 {
     if (time < self.mp_fire_at || time < self.mp_react_at || self.mp_reload_at) return;
     if (self.mp_clip <= 0) {
+        if (self.mp_laststand) return;
         self.mp_reload_start = time;
-        self.mp_reload_at = time + MP_Max(1.5, getWeaponDelay(self.weapon, RELOAD));
+        self.mp_reload_at = time + MP_ReloadDelay(self, MP_Max(1.5, getWeaponDelay(self.weapon, RELOAD)));
         return;
     }
-    self.mp_protected = 0;
+    if (!self.mp_laststand) self.mp_protected = 0;
     self.mp_clip--;
     self.mp_burst++;
-    self.mp_fire_at = time + MP_Max(0.10, getWeaponDelay(self.weapon, FIRE));
+    self.mp_fire_at = time + MP_FireDelay(self, MP_Max(0.10, getWeaponDelay(self.weapon, FIRE)));
     if (self.mp_burst >= 2 + mp_skill * 2) {
         self.mp_burst = 0;
         self.mp_fire_at += 0.4 + random() * 0.45;
     }
     self.mp_anim_until = time + 0.2;
     self.effects = self.effects | EF_MUZZLEFLASH;
-    Sound_PlaySound(self, GetWeaponSound(self.weapon), SOUND_TYPE_WEAPON_FIRE, SOUND_PRIORITY_ALLOWSKIP);
+    // Match the equipped weapon, using this bot's dedicated weapon channel.
+    self.mp_shot_sound = GetWeaponSound(self.weapon);
+    sound(self, CHAN_WEAPON, self.mp_shot_sound, 0.8, 1);
     vector start = self.origin + self.view_ofs;
     vector aim = normalize(self.enemy.origin + self.enemy.view_ofs * 0.7 - start);
     self.angles_y = vectoyaw(aim);
     makevectors(vectoangles(aim));
     vector aimright = v_right, aimup = v_up;
     float pellets = 1;
-    float spread = MP_AimSpread(mp_skill, vlen(self.enemy.origin - self.origin), vlen(self.enemy.velocity));
+    float spread = MP_WeaponSpread(self.weapon, mp_skill, vlen(self.enemy.origin - self.origin), vlen(self.enemy.velocity));
     if (self.weapon == W_DB || self.weapon == W_SAWNOFF || self.weapon == W_TRENCH) {
         pellets = 8; spread += 0.055;
     }
+    spread *= MP_SpreadScale(self);
     for (float p = 0; p < pellets; p++) {
         vector dir = normalize(aim + aimright * crandom() * spread + aimup * crandom() * spread);
         traceline(start, start + dir * 1800, false, self);
@@ -452,6 +586,18 @@ void() MP_BotFire =
             MP_Damage(trace_ent, self, damage, DMG_TYPE_UPPERTORSO);
         }
     }
+};
+
+void(float distance) MP_BotSelectWeapon =
+{
+    if (self.mp_perk != MP_PERK_OVERKILL || self.mp_laststand || self.mp_reload_at || time < self.mp_switch_at) return;
+    float other = self.weapon == self.mp_primary ? self.mp_secondary : self.mp_primary;
+    if (MP_WeaponSpread(other, mp_skill, distance, 0) >= MP_WeaponSpread(self.weapon, mp_skill, distance, 0) * 0.8) return;
+    float clip = self.mp_clip;
+    self.mp_clip = self.mp_other_clip; self.mp_other_clip = clip;
+    self.weapon = other;
+    self.mp_burst = 0; self.mp_fire_at = time + 0.4; self.mp_switch_at = time + 1.5;
+    setmodel(self.mp_held, MP_HeldModel(other));
 };
 
 void() MP_Navigate =
@@ -478,7 +624,7 @@ void() MP_Navigate =
     if (vlen(delta) < 36) { self.mp_goal = -1; return; }
     float yaw = vectoyaw(delta);
     self.angles_y = yaw;
-    if (!walkmove(yaw, 19)) {
+    if (!walkmove(yaw, 19 * MP_MoveScale(self))) {
         self.mp_stuck++;
         walkmove(yaw + ((self.mp_index & 1) ? 70 : -70), 16);
         if (self.mp_stuck >= 8) {
@@ -490,6 +636,16 @@ void() MP_Navigate =
 
 };
 
+// Keep navigation at 10 Hz, but allow fire deadlines between movement ticks.
+void() MP_BotSchedule =
+{
+    self.nextthink = MP_Max(time + 0.001, self.mp_ai_at);
+    if (self.enemy != world && !self.mp_reload_at && self.mp_clip > 0) {
+        float shot = MP_Max(self.mp_fire_at, self.mp_react_at);
+        if (shot > time) self.nextthink = MP_Min(self.nextthink, shot);
+    }
+};
+
 void() MP_BotThink =
 {
     self.nextthink = time + 0.1;
@@ -499,7 +655,20 @@ void() MP_BotThink =
         MP_UpdateVisual();
         return;
     }
-    if (self.health_delay < time) self.health = MP_Min(100, self.health + 3);
+    if (self.mp_laststand) {
+        if (time >= self.mp_bleedout_at) MP_FinalDeath(self, self.mp_down_attacker);
+        else {
+            if (self.mp_scan_at <= time) MP_Acquire();
+            if (self.enemy != world && MP_Hostile(self, self.enemy) && MP_Visible(self, self.enemy)) MP_BotFire();
+        }
+        MP_UpdateVisual(); return;
+    }
+    if (self.mp_ai_at > time) {
+        if (self.enemy != world && MP_Hostile(self, self.enemy) && MP_Visible(self, self.enemy)) MP_BotFire();
+        MP_UpdateVisual(); MP_BotSchedule(); return;
+    }
+    self.mp_ai_at = time + 0.1;
+    if (self.health_delay < time) self.health = MP_Min(self.max_health, self.health + 3);
     if (self.mp_reload_at && time >= self.mp_reload_at) {
         self.mp_reload_at = 0;
         self.mp_clip = getWeaponMag(self.weapon);
@@ -509,6 +678,7 @@ void() MP_BotThink =
         self.mp_lastseen = self.enemy.origin;
         self.mp_memory_until = time + 2;
         float distance = vlen(self.enemy.origin - self.origin);
+        MP_BotSelectWeapon(distance);
         float yaw = vectoyaw(self.enemy.origin - self.origin);
         self.angles_y = yaw;
         if (self.mp_reload_at) { MP_Navigate(); MP_UpdateVisual(); return; }
@@ -516,12 +686,13 @@ void() MP_BotThink =
             self.mp_strafe = random() < 0.5 ? -1 : 1;
             self.mp_strafe_at = time + 0.8 + random();
         }
-        if (distance > 600) walkmove(yaw, 16);
-        else if (distance < 150) walkmove(yaw + 180, 12);
-        else if (!walkmove(yaw + self.mp_strafe * 90, 10)) self.mp_strafe *= -1;
+        if (distance > 600) walkmove(yaw, 16 * MP_MoveScale(self));
+        else if (distance < 150) walkmove(yaw + 180, 12 * MP_MoveScale(self));
+        else if (!walkmove(yaw + self.mp_strafe * 90, 10 * MP_MoveScale(self))) self.mp_strafe *= -1;
         if (distance < 1600) MP_BotFire();
     } else MP_Navigate();
     MP_UpdateVisual();
+    MP_BotSchedule();
 };
 
 float() MP_PlayerThink =
@@ -535,7 +706,17 @@ float() MP_PlayerThink =
         if (self.mp_respawn_at <= time) MP_PlayerSpawn();
         return true;
     }
-    if (self.button0) self.mp_protected = 0;
+    if (self.mp_laststand) {
+        if (time >= self.mp_bleedout_at) { MP_FinalDeath(self, self.mp_down_attacker); return true; }
+        self.impulse = 0; self.maxspeed = 0; self.velocity = '0 0 0';
+        WeaponCore_UpdateViewModels(); WeaponCore_UpdateRecoilAndSpread();
+        if (self.button0) WeaponCore_FireButtonPressed(); else WeaponCore_FireButtonReleased();
+        if (self.button8 && IsDualWeapon(self.weapon)) WeaponCore_AimButtonPressed(); else WeaponCore_AimButtonReleased();
+        WeaponCore_UpdateWeaponStats();
+        self.frame = 38; self.think = SUB_Null; self.nextthink = -1;
+        return true;
+    }
+    if (self.button0 || (self.button8 && IsDualWeapon(self.weapon))) self.mp_protected = 0;
     return false;
 };
 
@@ -549,6 +730,8 @@ void() MP_PublishHUD =
         if (trace_ent.mp_actor && trace_ent.health > 0)
             targetname = sprintf("%s - BOT %02d", MP_Hostile(player, trace_ent) ? "ENEMY" : "ALLY", trace_ent.mp_index);
     }
+    cvar_set("mp_hud_perk", MP_PerkName(player.mp_perk));
+    cvar_set("mp_hud_downed", ftos(player.mp_laststand ? MP_Max(0, ceil(player.mp_bleedout_at - time)) : 0));
     cvar_set("mp_hud_target", targetname);
     cvar_set("mp_hud_blue", ftos(mp_blue));
     cvar_set("mp_hud_red", ftos(mp_red));
@@ -622,11 +805,20 @@ void() MP_Frame =
         self = mp_actors[pv]; self.think = SUB_Null; self.nextthink = -1;
         if (pv > 2) { setmodel(self, ""); setmodel(self.mp_held, ""); continue; }
         setorigin(self, [pv == 1 ? -43 : 43, -20, 36]); self.angles = '0 240 0';
-        self.health = 10000; self.frame = cvar("mp_class") == 3 ? 15 : cvar("mp_class") == 4 ? 39 : cvar("mp_class") == 2 ? 9 : 0;
+        if (cvar("mp_class") == 1) {
+            if (!self.mp_laststand) { self.mp_secondary = pv == 1 ? W_COLT : W_BIATCH; MP_BeginLastStand(self, world); }
+            self.health = 1; self.mp_bleedout_at = time + 5; self.mp_protected = time + 5;
+            MP_UpdateVisual();
+        } else self.health = 10000;
+        self.frame = cvar("mp_class") == 1 ? 40 : cvar("mp_class") == 3 ? 15 : cvar("mp_class") == 4 ? 39 : cvar("mp_class") == 2 ? 9 : 0;
         setorigin(self.mp_held, self.origin); self.mp_held.angles = self.angles; self.mp_held.frame = self.frame;
     }
     self = mp_actors[0]; self.health = 10000; setorigin(self, '0 -230 36');
-    self.v_angle = '8 90 0'; self.angles = self.v_angle; self.fixangle = true;
+    if (cvar("mp_class") == 1) {
+        if (!self.mp_laststand) { self.mp_secondary = W_BIATCH; MP_BeginLastStand(self, world); }
+        self.health = 1; self.mp_bleedout_at = time + 5; self.mp_protected = time + 5;
+    }
+    self.v_angle = '0 90 0'; self.angles = self.v_angle; self.fixangle = true;
     self = preview_self;
 #endif
     if (time >= mp_hudtime) {
@@ -648,15 +840,16 @@ void() MP_Init =
     game_modifier_can_packapunch = false;
     precache_model("models/skirmish/allies.mdl");
     precache_model("models/skirmish/axis.mdl");
-    float botweapons[19] = {W_KAR, W_THOMPSON, W_BAR, W_BROWNING, W_DB,
+    float botweapons[22] = {W_COLT, W_357, W_BIATCH, W_KAR, W_THOMPSON, W_BAR, W_BROWNING, W_DB,
         W_FG, W_GEWEHR, W_KAR_SCOPE, W_M1, W_M1A1, W_MP40, W_MG,
         W_PPSH, W_PTRS, W_SAWNOFF, W_STG, W_TRENCH, W_TYPE, W_SPRING};
-    for (float bw = 0; bw < 19; bw++)
+    for (float bw = 0; bw < 22; bw++)
         precache_model(MP_HeldModel(botweapons[bw]));
     for (float w = 1; w <= W_RAYMK2; w++) {
         if (MP_AllowedPrimary(w) || MP_AllowedSecondary(w)) {
             precache_model(GetWeaponModel(w, false));
             precache_extra(w);
+            precache_sound(GetWeaponSound(w));
         }
     }
     cvar_set("mp_hud_finished", "0");

@@ -1,6 +1,9 @@
 {
-  "frames": 40,
+  "frames": 41,
   "weapons": {
+    "1": "m1911/g_colt",
+    "4": "357/g_357",
+    "28": "m1911/g_colt",
     "2": "kar/g_kar",
     "3": "thomp/g_thomp",
     "5": "bar/g_bar",

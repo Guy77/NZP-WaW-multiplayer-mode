@@ -7,6 +7,8 @@ void(float condition, string message) MP_Assert =
     if (!condition) error(strcat("SKIRMISH TEST FAILED: ", message));
 };
 
+#include "perk_tests.qc"
+
 void() MP_TestFrame =
 {
     if (!mp_started) return;
@@ -141,7 +143,26 @@ void() MP_TestFrame =
         W_Fire(S_RIGHT);
         MP_Assert(player.weapons[0].weapon_magazine == magazine_before - 1, "player firing did not consume ammunition");
         MP_Assert(enemy.health < 100, "player weapon trace did not damage soldier");
-        MP_PlayerSpawn();
+        MP_PlayerSpawn(); mp_perk_test_stage = 0; mp_tests_phase = 14;
+    } else if (mp_tests_phase == 14) {
+        MP_TestPerks(); mp_perk_test_stage++;
+        if (mp_perk_test_stage >= 5) {
+            self = player; MP_SetPerk(player, MP_PERK_PARTING); player.mp_secondary = W_COLT;
+            MP_BeginLastStand(player, enemy); player.flags |= FL_GODMODE;
+            self = enemy; MP_SetPerk(enemy, MP_PERK_PARTING); enemy.mp_secondary = W_COLT;
+            MP_BeginLastStand(enemy, player); enemy.flags |= FL_GODMODE;
+            mp_tests_until = time + 5; mp_tests_phase = 15;
+        }
+    } else if (mp_tests_phase == 15) {
+        if (time < mp_tests_until) MP_Assert(player.health == 1 && enemy.health == 1, "Parting ended before five seconds");
+        else if (time >= mp_tests_until + 0.15) {
+            MP_Assert(player.health == 0 && enemy.health == 0, "Parting exceeded five seconds");
+            print("SKIRMISH TEST: five-second player and bot Parting Shot lifecycle passed\n");
+            mp_tests_phase = 16;
+        }
+    } else if (mp_tests_phase == 16) {
+        self = player; MP_PlayerSpawn();
+        cvar_set("mp_botperk", mp_botcount == 6 ? "4" : "-1");
         for (float k = 0; k <= mp_botcount; k++) {
             self = mp_actors[k];
             if (k) MP_BotSpawn();

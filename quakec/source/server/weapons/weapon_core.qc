@@ -259,6 +259,7 @@ void() W_PutOutHack =
 
 void() W_PutOut =
 {
+    if (mp_active && self.mp_laststand) return;
 	// We don't hold more than one weapon
 	if (self.weapons[1].weapon_id == 0 || self.downed ||
 	self.switch_delay > time || self.weapon_burst_count > 0 || self.isBuying)
@@ -398,7 +399,8 @@ void() ContinueReload = //Special reloads
 	}
 
 	if (delay) {
-		if (self.perks & P_SPEED) {
+		if (mp_active) delay = MP_ReloadDelay(self, delay);
+		else if (self.perks & P_SPEED) {
 			delay /= game_modifiers.gameplay.perksacola.perk_speedcola_reload_speed_multiplier;
 		}
 		self.reload_delay = time + delay;
@@ -416,7 +418,8 @@ void(float side) W_AdvanceAnim =
 	delay = getWeaponDelay(self.weapon, RELOAD);
 	reloadcancelframe = GetFrame(self.weapon, RELOAD_CANCEL);
 	
-	if (self.perks & P_SPEED) delay /= game_modifiers.gameplay.perksacola.perk_speedcola_reload_speed_multiplier;
+	if (mp_active) delay = MP_ReloadDelay(self, delay);
+		else if (self.perks & P_SPEED) delay /= game_modifiers.gameplay.perksacola.perk_speedcola_reload_speed_multiplier;
 
 	modelname = GetWeaponModel(self.weapon, 0);
 
@@ -427,6 +430,7 @@ void(float side) W_AdvanceAnim =
 
 void(float side) W_Reload =
 {
+    if (mp_active && self.mp_laststand) return;
 	if (self.zoom == 2 || self.weapon_burst_count > 0 || self.isBuying)
 		return;
 
@@ -532,7 +536,8 @@ void(float side) W_Reload =
 			endanimfunc = W_Give_Ammo;
 		}
 
-		if (self.perks & P_SPEED)
+		if (mp_active) delay = MP_ReloadDelay(self, delay);
+		else if (self.perks & P_SPEED)
 			delay /= game_modifiers.gameplay.perksacola.perk_speedcola_reload_speed_multiplier;
 		
 		if (side == S_RIGHT) {
@@ -603,7 +608,8 @@ void () W_LoadAmmo =
 
 	if (delay) {
 
-		if (self.perks & P_DOUBLE)
+		if (mp_active) delay = MP_FireDelay(self, delay);
+		else if (self.perks & P_DOUBLE)
 			delay /= game_modifiers.gameplay.perksacola.perk_doubletap_rechamber_speed_multiplier;
 			
 		Set_W_Frame (startframe, endframe, delay, reloadcancelframe, FIRE, W_LoadAmmoDone, modelname, false, S_RIGHT, false);
@@ -1086,7 +1092,7 @@ void(float side) W_Fire =
 		return;
 	}
 
-	if (self.downed)
+	if (self.downed || (mp_active && self.mp_laststand))
 		PAnim_LastFire();
 	else {
 		switch(self.stance) {
@@ -1115,10 +1121,11 @@ void(float side) W_Fire =
 	delay = getWeaponDelay(self.weapon, FIRE);
 
 	// Double Tap 2.0
-	if (self.perks & P_DOUBLE && self.has_doubletap_damage_buff)
+	if (!mp_active && (self.perks & P_DOUBLE) && self.has_doubletap_damage_buff)
 		shotcount *= 2;
 
 	spread = WepDef_WeaponSpread(self.weapon, self.stance);
+    if (mp_active && !self.zoom) spread *= MP_SpreadScale(self);
 
 	if (self.perks & P_DEAD) {
 		spread *= game_modifiers.gameplay.perksacola.perk_deadshot_weapon_spread_reduction_multiplier;
@@ -1218,7 +1225,8 @@ void(float side) W_Fire =
 	// World at War, the PPSh-41 is completely unaffected by
 	// Double Tap), but technically this IS the correct-and
 	// -reproducible factor due to whatever went wrong there.
-	if (self.perks & P_DOUBLE) {
+	if (mp_active) delay = MP_FireDelay(self, delay);
+		else if (self.perks & P_DOUBLE) {
 		delay /= game_modifiers.gameplay.perksacola.perk_doubletap_rate_of_fire_multiplier;
 	}
 

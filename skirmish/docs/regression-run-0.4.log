@@ -1,0 +1,30 @@
+Compiled /workspace/scratch/ddfea2c7325f/skirmish/dist/progs.dat
+Compiled /workspace/scratch/ddfea2c7325f/skirmish/dist/progs-test.dat
+SKIRMISH TEST: starting real-engine regression checks
+SKIRMISH TEST: initial clients=0 actors=7
+SKIRMISH TEST: perks, dual fire, sound identity, range profiles and Parting Shot passed
+SKIRMISH TEST: five-second player and bot Parting Shot lifecycle passed
+SKIRMISH TEST: rules, classes, collision, navigation, respawn passed
+SKIRMISH TEST: moved=6/6, bot kills=12
+SKIRMISH TESTS PASS
+SKIRMISH TEST: starting real-engine regression checks
+SKIRMISH TEST: initial clients=0 actors=13
+SKIRMISH TEST: perks, dual fire, sound identity, range profiles and Parting Shot passed
+SKIRMISH TEST: five-second player and bot Parting Shot lifecycle passed
+SKIRMISH TEST: rules, classes, collision, navigation, respawn passed
+SKIRMISH TEST: moved=12/12, bot kills=35
+SKIRMISH TESTS PASS
+SKIRMISH TEST: starting real-engine regression checks
+SKIRMISH TEST: initial clients=0 actors=7
+SKIRMISH TEST: perks, dual fire, sound identity, range profiles and Parting Shot passed
+SKIRMISH TEST: five-second player and bot Parting Shot lifecycle passed
+SKIRMISH TEST: rules, classes, collision, navigation, respawn passed
+SKIRMISH TEST: moved=6/6, bot kills=7
+SKIRMISH TESTS PASS
+SKIRMISH TEST: starting real-engine regression checks
+SKIRMISH TEST: initial clients=0 actors=13
+SKIRMISH TEST: perks, dual fire, sound identity, range profiles and Parting Shot passed
+SKIRMISH TEST: five-second player and bot Parting Shot lifecycle passed
+SKIRMISH TEST: rules, classes, collision, navigation, respawn passed
+SKIRMISH TEST: moved=12/12, bot kills=29
+SKIRMISH TESTS PASS

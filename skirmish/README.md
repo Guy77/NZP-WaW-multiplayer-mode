@@ -1,13 +1,17 @@
-# NZP Skirmish — prototype 0.3
+# NZP Skirmish — prototype 0.4.1
 
 A standalone, offline soldier-combat variant of **Nazi Zombies: Portable**, inspired by World at War's multiplayer. One local player fights alongside or against 6–12 bots. This is an early playable foundation, not a complete recreation of World at War.
+
+0.4.1 fixes the Offline Multiplayer menu overflow reported on Vita. Use the full recovery package after deleting/resetting data; see `docs/UPDATE_0.4.1.md`.
 
 ## Included
 
 - Separate **Offline Multiplayer** setup menu and **Create a Class** menu.
 - Team Deathmatch (Allies versus Axis, friendly fire off) and Free-for-All.
 - 6–12 bots, three skill levels, soldier presets or randomized period weapon loadouts on each respawn.
-- Five saved player classes, 21 base primary weapons and three secondaries (Colt, Magnum, Ballistic Knife). No Pack-a-Punch weapons, Ray Guns, Wunderwaffe or flamethrower.
+- Five saved player classes, 21 base primary weapons and four secondaries (Colt, Magnum, Dual M1911, Ballistic Knife). No Pack-a-Punch weapons, Ray Guns, Wunderwaffe or flamethrower.
+- One optional perk per class and bot, including Parting Shot and Overkill. See `docs/UPDATE_0.4.md` for exact effects.
+- Weapon-matched bot firing sounds and range-specific accuracy.
 - Two frag grenades and a knife for the player; existing NZP weapon handling, reloading, aiming and movement.
 - Configurable respawn delay: **5 seconds by default**, adjustable from 1–30 seconds for both player and bots.
 - Kill limit, time limit, scores, deaths, match results and pause/restart flow.
@@ -43,13 +47,13 @@ For Vita installation and controls, read **INSTALL_VITA.md**.
 
 ## Scope of this prototype
 
-The bots navigate a small authored waypoint graph, use line of sight and a limited memory of enemies, react with a delay, strafe, fire bursts, reload and attempt to take cover when reloading. They do not yet use grenades, knives or sidearm switching, coordinate squads, mantle, or navigate arbitrary zombie maps. Their reserve ammunition is unlimited, but magazines and reload delays are enforced. They use adapted NZP soldier meshes, faction materials, and existing third-person weapon models. A single reused non-solid entity per bot holds a weapon model with baked hand-following poses. The generated model files total about 0.8 MB; that is not a runtime memory or GPU measurement. In Free-for-All every bot is hostile regardless of uniform.
+The bots navigate a small authored waypoint graph, use line of sight and a limited memory of enemies, react with a delay, strafe, fire bursts, reload and attempt to take cover when reloading. They do not yet use grenades, knives or routine sidearm switching, coordinate squads, mantle, or navigate arbitrary zombie maps. Standing bots have unlimited reserve ammunition, but magazines and reload delays are enforced. Parting Shot bots get only the loaded secondary magazine; Overkill bots can switch between two primaries. They use adapted NZP soldier meshes, faction materials, and existing third-person weapon models. A single reused non-solid entity per bot holds a weapon model with baked hand-following poses. The generated model files total about 0.8 MB; that is not a runtime memory or GPU measurement. In Free-for-All every bot is hostile regardless of uniform.
 
-Player classes retain MP5K as a non-period primary and Ballistic Knife as a secondary. Saved knife-primary classes migrate at spawn; removed weapons fall back to a valid role primary or Colt. Bot random loadouts use period ballistic weapons only. The 0.2 distance/movement aim penalties and reduced bursts are retained.
+Player classes retain MP5K as a non-period primary and Ballistic Knife as a secondary. Saved knife-primary classes migrate at spawn; removed weapons fall back to a valid role primary or Colt. Bot random loadouts use period ballistic weapons only. The 0.4 accuracy profiles account for weapon range, skill and target movement; reaction delays and burst pauses remain.
 
-Killstreaks, class perks, progression, objective modes, custom class names, match history, polished historical faction art, weapon-specific grip/reload animations and larger maps are deferred. There is no network multiplayer. The engine retains its internal local client/server simulation and upstream networking code, but this menu starts one local client with listening disabled; bots do not occupy network slots.
+Killstreaks, progression, objective modes, custom class names, match history, polished historical faction art, weapon-specific grip/reload animations and larger maps are deferred. There is no network multiplayer. The engine retains its internal local client/server simulation and upstream networking code, but this menu starts one local client with listening disabled; bots do not occupy network slots.
 
-The user confirmed that **0.1 and 0.2 run well on Vita**. Version 0.3 passes desktop tests and has a cross-compiled Vita VPK, but its new visual workload and map still need device testing. Start with six bots, then compare twelve.
+The user confirmed that **0.3 runs well on Vita**. Version 0.4 passes desktop tests and has a cross-compiled Vita VPK; its new gameplay needs device testing. Start with six bots, then compare twelve.
 
 ## Source layout and builds
 

@@ -22,7 +22,25 @@ static cvar_t mp_secondary[5] = {
     {"mp_class3_secondary", "4", true}, {"mp_class4_secondary", "1", true},
     {"mp_class5_secondary", "1", true}
 };
+static cvar_t mp_botperk = {"mp_botperk", "0", true};
+static cvar_t mp_perk[5] = {
+    {"mp_class1_perk", "0", true}, {"mp_class2_perk", "0", true},
+    {"mp_class3_perk", "0", true}, {"mp_class4_perk", "0", true},
+    {"mp_class5_perk", "0", true}
+};
+static const char *mp_perks[] = {"NO PERK", "DOUBLE TAP", "SLEIGHT OF HAND", "JUGGERNAUT",
+    "PARTING SHOT", "STEADY AIM", "FLAK JACKET", "OVERKILL", "MARATHON"};
+static const char *mp_perk_help[] = {
+    "One perk or none. Future point bonuses are not active yet.",
+    "33% higher fire rate. Bullet damage stays the same.",
+    "Reload in half the usual time.", "150 health instead of 100.",
+    "Five seconds downed: secondary only, one magazine, no reserve. Brief 0.5 second protection.",
+    "35% less hip-fire spread.", "Half explosive damage. No explosive dive attack.",
+    "Carry two primary weapons. Removing this perk restores the M1911 secondary.",
+    "Double sprint duration. Bots move 10% faster."
+};
 static cvar_t mp_hud[] = {
+    {"mp_hud_perk", "No perk"}, {"mp_hud_downed", "0"},
     {"mp_hud_blue", "0"}, {"mp_hud_red", "0"}, {"mp_hud_time", "0"},
     {"mp_hud_respawn", "0"}, {"mp_hud_finished", "0"}, {"mp_hud_result", ""},
     {"mp_hud_board", ""}, {"mp_hud_kills", "0"}, {"mp_hud_deaths", "0"},
@@ -49,6 +67,7 @@ void Menu_Skirmish_Init(void)
     Cvar_RegisterVariable(&mp_mode);
     Cvar_RegisterVariable(&mp_respawn);
     Cvar_RegisterVariable(&mp_loadouts);
+    Cvar_RegisterVariable(&mp_botperk);
     Cvar_RegisterVariable(&mp_skill);
     Cvar_RegisterVariable(&mp_scorelimit);
     Cvar_RegisterVariable(&mp_minutes);
@@ -56,6 +75,7 @@ void Menu_Skirmish_Init(void)
     for (i = 0; i < 5; ++i) {
         Cvar_RegisterVariable(&mp_primary[i]);
         Cvar_RegisterVariable(&mp_secondary[i]);
+        Cvar_RegisterVariable(&mp_perk[i]);
     }
     for (i = 0; i < sizeof(mp_hud)/sizeof(mp_hud[0]); ++i)
         Cvar_RegisterVariable(&mp_hud[i]);
@@ -78,23 +98,45 @@ static void MP_PrimaryNext(void)
 static void MP_SecondaryNext(void)
 {
     int slot = MP_ClassIndex();
-    Cvar_SetValue(mp_secondary[slot].name, mp_secondary[slot].value == 1 ? 4 : (mp_secondary[slot].value == 4 ? 6 : 1));
+    if (mp_perk[slot].value == 7) {
+        unsigned i, count = sizeof(mp_weapons)/sizeof(mp_weapons[0]);
+        for (i = 0; i < count; ++i) if (mp_secondary[slot].value == mp_weapons[i].id) break;
+        Cvar_SetValue(mp_secondary[slot].name, mp_weapons[(i + 1) % count].id);
+    } else {
+        int old = (int)mp_secondary[slot].value;
+        Cvar_SetValue(mp_secondary[slot].name, old == 1 ? 4 : old == 4 ? 28 : old == 28 ? 6 : 1);
+    }
+}
+static void MP_PerkNext(void)
+{
+    int slot = MP_ClassIndex(), old = bound(0, (int)mp_perk[slot].value, 8);
+    int next = (old + 1) % 9;
+    Cvar_SetValue(mp_perk[slot].name, next);
+    if (old == 7) Cvar_SetValue(mp_secondary[slot].name, 1);
+    if (next == 7) Cvar_SetValue(mp_secondary[slot].name, mp_defaults[(slot + 1) % 5]);
+}
+static void MP_BotPerkNext(void)
+{
+    int old = (int)mp_botperk.value;
+    Cvar_SetValue("mp_botperk", old == 8 ? -1 : old + 1);
 }
 static void MP_RestoreClass(void)
 {
     int slot = MP_ClassIndex();
     Cvar_SetValue(mp_primary[slot].name, mp_defaults[slot]);
+    Cvar_SetValue(mp_perk[slot].name, 0);
     Cvar_SetValue(mp_secondary[slot].name, slot == 2 ? 4 : 1);
 }
 static void MP_ClassesBack(void)
 {
     if (mp_classes_parent == m_pause) Menu_Pause_Set();
+    else if (mp_classes_parent == m_main) Menu_Main_Set();
     else Menu_Skirmish_Set();
 }
 
 void Menu_Classes_Set(void)
 {
-    mp_classes_parent = (m_state == m_pause) ? m_pause : m_skirmish;
+    mp_classes_parent = (m_state == m_pause) ? m_pause : (m_state == m_main) ? m_main : m_skirmish;
     Menu_ResetMenuButtons();
     m_previous_state = mp_classes_parent;
     m_state = m_classes;
@@ -116,10 +158,17 @@ void Menu_Classes_Draw(void)
         if (mp_weapons[i].id == (int)mp_primary[slot].value) name = mp_weapons[i].name;
     Menu_DrawButton(2, 1, "PRIMARY", "Cycle NZP's base weapons. No upgrades, Ray Guns, Wunderwaffe or flamethrower.", MP_PrimaryNext);
     Menu_DrawOptionButton(2, (char *)name);
-    Menu_DrawButton(3, 2, "SECONDARY", "Choose a pistol or ballistic knife. Every class carries two frag grenades and a knife.", MP_SecondaryNext);
-    Menu_DrawOptionButton(3, mp_secondary[slot].value == 6 ? "Ballistic Knife" : (mp_secondary[slot].value == 4 ? ".357 Magnum" : "Colt M1911"));
-    Menu_DrawButton(5, 3, "RESTORE PRESET", "Restore this slot's soldier role loadout.", MP_RestoreClass);
-    Menu_DrawButton(-1, 4, "BACK", "Your classes are saved with the game configuration.", MP_ClassesBack);
+    name = mp_secondary[slot].value == 28 ? "Dual M1911" : mp_secondary[slot].value == 6 ? "Ballistic Knife" : mp_secondary[slot].value == 4 ? ".357 Magnum" : "Colt M1911";
+    if (mp_perk[slot].value == 7)
+        for (i = 0; i < sizeof(mp_weapons)/sizeof(mp_weapons[0]); ++i)
+            if (mp_weapons[i].id == (int)mp_secondary[slot].value) name = mp_weapons[i].name;
+    Menu_DrawButton(3, 2, mp_perk[slot].value == 7 ? "SECOND PRIMARY" : "SECONDARY", "Dual M1911 fires normal bullets. Overkill enables a second primary.", MP_SecondaryNext);
+    Menu_DrawOptionButton(3, (char *)name);
+    i = bound(0, (int)mp_perk[slot].value, 8);
+    Menu_DrawButton(4, 3, "PERK", (char *)mp_perk_help[i], MP_PerkNext);
+    Menu_DrawOptionButton(4, (char *)mp_perks[i]);
+    Menu_DrawButton(6, 4, "RESTORE PRESET", "Restore this slot's loadout with no perk.", MP_RestoreClass);
+    Menu_DrawButton(-1, 5, "BACK", "Your classes are saved with the game configuration.", MP_ClassesBack);
 }
 
 static void MP_Start(void)
@@ -169,5 +218,7 @@ void Menu_Skirmish_Draw(void)
     Menu_DrawOptionSlider(9, 8, 1, 30, mp_minutes, "mp_minutes", false, true, 1);
     Menu_DrawButton(10, 9, "MAP", "Proving Ground: open arena. Supply Depot: buildings and flanking lanes.", MP_MapNext);
     Menu_DrawOptionButton(10, mp_map.value ? "SUPPLY DEPOT" : "PROVING GROUND");
-    Menu_DrawButton(-1, 10, "BACK", "Return to the main menu.", Menu_Main_Set);
+    Menu_DrawButton(11, 10, "BOT PERKS", "None, one random perk per spawn, or the same selected perk for every bot.", MP_BotPerkNext);
+    Menu_DrawOptionButton(11, mp_botperk.value == -1 ? "RANDOMIZED" : (char *)mp_perks[bound(0, (int)mp_botperk.value, 8)]);
+    Menu_DrawButton(-1, 11, "BACK", "Return to the main menu.", Menu_Main_Set);
 }

@@ -678,7 +678,7 @@ void() PlayerPreThink =
 float player_trace_time;
 void() PlayerPostThink =
 {
-	if (mp_active && (self.health <= 0 || mp_finished)) return;
+	if (mp_active && (self.health <= 0 || self.mp_laststand || mp_finished)) return;
 
 #ifdef FTE
 
@@ -808,7 +808,9 @@ void() PlayerPostThink =
 
 #endif // FTE
 		
-		if (self.perks & P_STAMIN) {
+		if (mp_active) {
+            if (self.sprint_timer > MP_SprintLimit(self, sprint_max_time)) W_SprintStop();
+        } else if (self.perks & P_STAMIN) {
 			if (self.sprint_timer > sprint_max_time * game_modifiers.gameplay.perksacola.perk_staminup_stamina_recharge_multiplier) {
 				W_SprintStop();
 			}

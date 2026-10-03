@@ -1,0 +1,6 @@
+Menu_DrawButton
+/workspace/scratch/ddfea2c7325f/vril-engine/source/menu/menu_helper.c:557
+Menu_Skirmish_Draw
+/workspace/scratch/ddfea2c7325f/vril-engine/source/menu/menu_skirmish.c:222
+Menu_Draw
+/workspace/scratch/ddfea2c7325f/vril-engine/source/menu/menu.c:231

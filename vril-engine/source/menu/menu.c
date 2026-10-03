@@ -167,9 +167,16 @@ void Menu_Init (void)
 	Cmd_AddCommand ("togglemenu", Menu_ToggleMenu_f);
     Cmd_AddCommand("menu_skirmish", Menu_Skirmish_Set);
     Cmd_AddCommand("menu_classes", Menu_Classes_Set);
+#ifdef SKIRMISH_MENU_TEST
+    extern void Menu_SkirmishTestStart(void);
+    Cmd_AddCommand("test_skirmish_menus", Menu_SkirmishTestStart);
+#endif
 }
 
 
+#ifdef SKIRMISH_MENU_TEST
+void Menu_SkirmishTestFrame(void);
+#endif
 void Menu_Draw (void)
 {
 	if (loading_init == true) {
@@ -291,6 +298,9 @@ void Menu_Draw (void)
 	VID_UnlockBuffer ();
 	S_ExtraUpdate ();
 	VID_LockBuffer ();
+#ifdef SKIRMISH_MENU_TEST
+    Menu_SkirmishTestFrame();
+#endif
 }
 
 /*

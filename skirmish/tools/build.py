@@ -78,7 +78,7 @@ def stage(target, destination, asset_dir):
         shutil.copy2(MOD / "maps" / name, game / "maps" / name)
     shutil.copy2(DIST / "progs.dat", game / "progs.dat")
     shutil.copytree(MOD / "generated/models/skirmish", game / "models/skirmish", dirs_exist_ok=True)
-    (game / "version.txt").write_text("NZP Skirmish prototype 0.3\n")
+    (game / "version.txt").write_text("NZP Skirmish prototype 0.4.1\n")
     # Defaults are written once, so future launches preserve archived classes.
     with (game / "config.cfg").open("a") as config:
         config.write('\n// NZP Skirmish initial settings\n'

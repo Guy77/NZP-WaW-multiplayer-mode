@@ -35,6 +35,10 @@ float(float wep) EqualPapWeapon;
 #ifndef CSQC
 string(float wep, float weapon_tier) GetWeaponName =
 {
+#ifndef CSQC
+    if (mp_active && wep == W_BIATCH) return "Dual M1911";
+#endif
+
 	string weapon_name = "";
 
 	switch (wep)
@@ -245,6 +249,10 @@ string(float wep, float weapon_tier) GetWeaponName =
 
 float(float wep) GetFiretype =
 {
+#ifndef CSQC
+    if (mp_active && wep == W_BIATCH) return FIRETYPE_SEMIAUTO;
+#endif
+
 
 	switch (wep)
 	{
@@ -672,6 +680,10 @@ float(float wep, float current_perks, float type) getWeaponMultiplier =
 
 float(float wep) getWeaponMag =
 {
+#ifndef CSQC
+    if (mp_active && wep == W_BIATCH) return 8;
+#endif
+
 
 	switch (wep)
 	{
@@ -788,6 +800,10 @@ float(float wep) getWeaponMag =
 
 float(float wep) getWeaponAmmo =
 {
+#ifndef CSQC
+    if (mp_active && wep == W_BIATCH) return 80;
+#endif
+
 	float weapon_ammo = 0;
 
 	switch (wep)
@@ -964,6 +980,10 @@ float(float wep) getWeaponAmmo =
 
 float(float wep, float weapon_tier) getWeaponDamage =
 {
+#ifndef CSQC
+    if (mp_active && wep == W_BIATCH) return 20;
+#endif
+
 	float weapon_damage = 0;
 
 	switch (wep)
@@ -1272,6 +1292,10 @@ float(float wep, float penetration_times) getWeaponPenetration =
 
 float(float wep, float delaytype) getWeaponDelay =
 {
+#ifndef CSQC
+    if (mp_active && wep == W_BIATCH && (delaytype == FIRE || delaytype == RELOAD)) return delaytype == FIRE ? 0.1 : 1.9;
+#endif
+
 
 	switch (wep)
 	{
@@ -3196,6 +3220,10 @@ string(float wep) GetLeftWeaponModel = {
 }
 
 float(float wep) IsPapWeapon = {
+#ifndef CSQC
+    if (mp_active && wep == W_BIATCH) return false;
+#endif
+
 
 	switch(wep) {
 		case W_BIATCH:
@@ -4944,6 +4972,10 @@ float(float weapon, float stance) WepDef_WeaponMaxSpread =
 
 float(float weapon, float stance) WepDef_WeaponSpread =
 {
+#ifndef CSQC
+    if (mp_active && weapon == W_BIATCH) weapon = W_COLT;
+#endif
+
 	// Early out.
 	if (self.recoil_delay > time)
 		return WepDef_WeaponMaxSpread(weapon, stance);

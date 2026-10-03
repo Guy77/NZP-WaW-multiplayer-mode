@@ -1,0 +1,28 @@
+==4==WARNING: reading executable name failed with errno 2, some stack frames may not be symbolized
+==4==WARNING: reading executable name failed with errno 2, some stack frames may not be symbolized
+Console initialized.
+Vril Engine SDL (Linux)
+64.0 megabyte Quake hunk 
+SDL OpenGL video mode 960x544 initialized.
+Can't register variable show_fps, already defined
+Can't register variable r_flametype, already defined
+Can't register variable r_runqmbparticles, already defined
+========Nazi Zombies Portable Initialized=========
+execing nzp.rc
+execing default.cfg
+"DEL" isn't a valid key
+Command "volume" not found, check QC...
+execing config.cfg
+execing autoexec.cfg
+CL_EstablishConnection: connected to local
+1 demo(s) in loop
+Client LOCAL connected
+Starting test suite: map-boot
+
+VERSION 2.00 SERVER (568 CRC)
+
+
+
+Supply Depot - NZP Skirmish
+player entered the game
+Test suite passed: map-boot

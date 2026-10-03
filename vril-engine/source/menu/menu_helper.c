@@ -175,6 +175,12 @@ void Menu_SetOptionCvar (cvar_t option, char *option_string, int min_option_valu
 
 void Menu_BuildMenuButtons (int button_index, char *button_name, void *on_activate)
 {
+    // Guard before every access, including the draw and slider entry points.
+    if (!current_menu.button || button_index < 0 || button_index >= MAX_MENU_BUTTONS) {
+        Con_Printf("Ignoring invalid menu button index %d\n", button_index);
+        return;
+    }
+
 	// Button is currently inactive,
 	// so set its' attributes
 	if (!current_menu.button[button_index].enabled) {
@@ -540,6 +546,12 @@ Menu_DrawButton
 */
 void Menu_DrawButton (int order, int button_index, char* button_name, char* button_summary, void *on_activate)
 {
+    // Guard before every access, including the draw and slider entry points.
+    if (!current_menu.button || button_index < 0 || button_index >= MAX_MENU_BUTTONS) {
+        Con_Printf("Ignoring invalid menu button index %d\n", button_index);
+        return;
+    }
+
 	int y_factor = 15;
 	int x_pos = 140;
 	int y_pos = 0;
@@ -772,6 +784,12 @@ void Menu_DrawControllerGlyphPreview(int order)
 
 void Menu_DrawOptionSlider(int order, int button_index, float min_option_value, float max_option_value, cvar_t option, char* option_string, qboolean zero_to_one, qboolean draw_option_string, float increment_amount)
 {
+    // Guard before every access, including the draw and slider entry points.
+    if (!current_menu.button || button_index < 0 || button_index >= MAX_MENU_BUTTONS) {
+        Con_Printf("Ignoring invalid menu button index %d\n", button_index);
+        return;
+    }
+
 	int y_factor = 15;
 	int x_pos = 165; 
 	int y_pos = 30 + (order*y_factor);
